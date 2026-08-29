@@ -1,6 +1,6 @@
 {
   "name": "admin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "CMS Admin Panel desktop application",
   "private": true,
   "main": "desktop/main.cjs",
@@ -81,7 +81,9 @@
         }
       ],
       "icon": "public/logo.svg",
-      "publish": ["github"]
+      "publish": [
+        "github"
+      ]
     },
     "nsis": {
       "oneClick": false,
