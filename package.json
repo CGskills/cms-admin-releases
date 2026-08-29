@@ -60,8 +60,8 @@
     "files": [
       "desktop/**/*",
       ".next/standalone/**/*",
-      "node_modules/electron-updater/**/*",
-      "!node_modules/**/*"
+      "!node_modules/**/*",
+      "node_modules/electron-updater/**/*"
     ],
     "directories": {
       "output": "release"
