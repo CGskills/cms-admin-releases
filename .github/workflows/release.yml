@@ -27,9 +27,6 @@ jobs:
       - name: Build Next.js app
         run: npm run build
 
-      - name: Prepare standalone server
-        run: npm run desktop:prepare
-
       - name: Build and publish Electron app
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
