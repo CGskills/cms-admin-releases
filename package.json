@@ -60,6 +60,7 @@
     "files": [
       "desktop/**/*",
       ".next/standalone/**/*",
+      "node_modules/electron-updater/**/*",
       "!node_modules/**/*"
     ],
     "directories": {
