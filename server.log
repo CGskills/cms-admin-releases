@@ -1,0 +1,352 @@
+
+> admin@0.1.0 dev
+> next dev
+
+▲ Next.js 16.3.1 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.12:3000
+- Environments: .env.local
+✓ Ready in 1098ms
+✓ Running next.config.ts took 166ms
+
+○ Compiling /admin ...
+ GET /admin 200 in 17.9s (next.js: 11.9s, proxy.ts: 1474ms, application-code: 4.5s)
+ GET /admin/pricing 200 in 3.4s (next.js: 868ms, proxy.ts: 2.5s, application-code: 42ms)
+ GET /admin/login 200 in 602ms (next.js: 521ms, proxy.ts: 6ms, application-code: 74ms)
+ GET /admin 200 in 4.3s (next.js: 39ms, proxy.ts: 2.6s, application-code: 1584ms)
+ GET /admin/login 200 in 184ms (next.js: 101ms, proxy.ts: 10ms, application-code: 73ms)
+ GET /admin 200 in 858ms (next.js: 8ms, proxy.ts: 245ms, application-code: 606ms)
+ GET /admin 200 in 993ms (next.js: 5ms, proxy.ts: 239ms, application-code: 749ms)
+ GET /admin/pricing 200 in 281ms (next.js: 9ms, proxy.ts: 250ms, application-code: 23ms)
+ GET /admin/media 200 in 2.5s (next.js: 438ms, proxy.ts: 429ms, application-code: 1597ms)
+ GET /admin/settings 200 in 1552ms (next.js: 1069ms, proxy.ts: 275ms, application-code: 208ms)
+ GET /admin/media 200 in 1542ms (next.js: 11ms, proxy.ts: 268ms, application-code: 1263ms)
+ GET /admin 200 in 822ms (next.js: 10ms, proxy.ts: 264ms, application-code: 549ms)
+ GET /admin/portfolio 200 in 745ms (next.js: 325ms, proxy.ts: 241ms, application-code: 179ms)
+ GET /admin/portfolio/a91e32f6-843c-4cab-a020-7a13bcea292a 200 in 4.0s (next.js: 3.6s, proxy.ts: 305ms, application-code: 162ms)
+ GET /admin/portfolio/a91e32f6-843c-4cab-a020-7a13bcea292a 200 in 422ms (next.js: 16ms, proxy.ts: 227ms, application-code: 179ms)
+ GET /admin/portfolio 200 in 310ms (next.js: 4ms, proxy.ts: 127ms, application-code: 178ms)
+ POST /admin/portfolio/a91e32f6-843c-4cab-a020-7a13bcea292a 200 in 1724ms (next.js: 18ms, proxy.ts: 294ms, application-code: 1412ms)
+  └─ ƒ updatePortfolio("a91e32f6-843c-4cab-a020-7a13bcea292a", {}) in 1054ms portfolio/actions.ts
+ GET /admin/testimonials 200 in 693ms (next.js: 265ms, proxy.ts: 248ms, application-code: 180ms)
+ GET /admin/services 200 in 1225ms (next.js: 442ms, proxy.ts: 429ms, application-code: 354ms)
+ GET /admin/services/new 200 in 396ms (next.js: 247ms, proxy.ts: 121ms, application-code: 28ms)
+ GET /admin/pages 200 in 707ms (next.js: 258ms, proxy.ts: 252ms, application-code: 197ms)
+ GET /admin/pages/new 200 in 378ms (next.js: 237ms, proxy.ts: 114ms, application-code: 27ms)
+✓ Finished filesystem cache database compaction in 14.3s
+ GET /admin 200 in 1815ms (next.js: 9ms, proxy.ts: 777ms, application-code: 1029ms)
+ GET /admin/settings 200 in 946ms (next.js: 41ms, proxy.ts: 649ms, application-code: 256ms)
+✓ Compiled in 729ms
+✓ Compiled in 241ms
+⨯ ./app/admin/testimonials/page.tsx:5:1
+Error: Module not found: Can't resolve './_components/TestimonialsList'
+  [90m3 |[0m [36mimport[0m [33mButton[0m [36mfrom[0m [32m'@/components/ui/Button'[0m;
+  [90m4 |[0m [36mimport[0m [33mDeleteTestimonialButton[0m [36mfrom[0m [32m'./_components/DeleteTestimonialButton'[0m;
+[31m[1m>[0m [90m5 |[0m [36mimport[0m [33mTestimonialsList[0m [36mfrom[0m [32m'./_components/TestimonialsList'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m6 |[0m
+  [90m7 |[0m [36mexport[0m [36mdefault[0m [36masync[0m [36mfunction[0m [33mTestimonialsPage[0m() {
+  [90m8 |[0m   [36mconst[0m supabase = [36mawait[0m createClient();
+
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/admin/testimonials/page.tsx:5:1
+Error: Module not found: Can't resolve './_components/TestimonialsList'
+  [90m3 |[0m [36mimport[0m [33mButton[0m [36mfrom[0m [32m'@/components/ui/Button'[0m;
+  [90m4 |[0m [36mimport[0m [33mDeleteTestimonialButton[0m [36mfrom[0m [32m'./_components/DeleteTestimonialButton'[0m;
+[31m[1m>[0m [90m5 |[0m [36mimport[0m [33mTestimonialsList[0m [36mfrom[0m [32m'./_components/TestimonialsList'[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m6 |[0m
+  [90m7 |[0m [36mexport[0m [36mdefault[0m [36masync[0m [36mfunction[0m [33mTestimonialsPage[0m() {
+  [90m8 |[0m   [36mconst[0m supabase = [36mawait[0m createClient();
+
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+✓ Compiled in 305ms
+✓ Finished writing to filesystem cache in 11.4s
+ GET /admin/login 200 in 374ms (next.js: 44ms, proxy.ts: 122ms, application-code: 208ms)
+ GET /admin 200 in 1518ms (next.js: 13ms, proxy.ts: 699ms, application-code: 806ms)
+ GET /admin 200 in 1463ms (next.js: 6ms, proxy.ts: 469ms, application-code: 988ms)
+ GET /admin/testimonials 200 in 1716ms (next.js: 949ms, proxy.ts: 362ms, application-code: 405ms)
+ GET /admin/testimonials/new 200 in 1139ms (next.js: 633ms, proxy.ts: 479ms, application-code: 27ms)
+ GET /admin/testimonials 200 in 792ms (next.js: 73ms, proxy.ts: 180ms, application-code: 539ms)
+ POST /admin/testimonials/new 200 in 2.3s (next.js: 72ms, proxy.ts: 736ms, application-code: 1534ms)
+  └─ ƒ createTestimonial({}) in 679ms testimonials/actions.ts
+ POST /admin/testimonials 200 in 2.5s (next.js: 4ms, proxy.ts: 598ms, application-code: 1849ms)
+  └─ ƒ deleteTestimonial("a476e918-530d-4d28-909e-575432fc934d") in 1072ms testimonials/actions.ts
+ GET /admin/testimonials 200 in 836ms (next.js: 6ms, proxy.ts: 529ms, application-code: 300ms)
+✓ Compiled in 5.6s
+ GET /admin 200 in 1473ms (next.js: 31ms, proxy.ts: 399ms, application-code: 1043ms)
+ GET /admin/testimonials 200 in 436ms (next.js: 63ms, proxy.ts: 164ms, application-code: 209ms)
+ GET /admin/testimonials/new 200 in 539ms (next.js: 38ms, proxy.ts: 475ms, application-code: 25ms)
+ GET /admin/testimonials 200 in 402ms (next.js: 4ms, proxy.ts: 164ms, application-code: 234ms)
+ POST /admin/testimonials/new 200 in 1676ms (next.js: 5ms, proxy.ts: 564ms, application-code: 1106ms)
+  └─ ƒ createTestimonial({}) in 689ms testimonials/actions.ts
+ GET /admin/testimonials/da36e94a-2a8e-4fec-aa46-974348f80cc4 200 in 2.8s (next.js: 2.0s, proxy.ts: 478ms, application-code: 295ms)
+ GET /admin/testimonials 200 in 545ms (next.js: 24ms, proxy.ts: 179ms, application-code: 342ms)
+ POST /admin/testimonials/da36e94a-2a8e-4fec-aa46-974348f80cc4 200 in 1911ms (next.js: 46ms, proxy.ts: 465ms, application-code: 1400ms)
+  └─ ƒ updateTestimonial("da36e94a-2a8e-4fec-aa46-974348f80cc4", {}) in 797ms testimonials/actions.ts
+✓ Finished filesystem cache database compaction in 16.8s
+ POST /admin/testimonials 200 in 1385ms (next.js: 5ms, proxy.ts: 568ms, application-code: 812ms)
+  └─ ƒ togglePublished("da36e94a-2a8e-4fec-aa46-974348f80cc4", false) in 213ms testimonials/actions.ts
+ POST /admin/testimonials 200 in 1986ms (next.js: 5ms, proxy.ts: 544ms, application-code: 1438ms)
+  └─ ƒ deleteTestimonial("da36e94a-2a8e-4fec-aa46-974348f80cc4") in 910ms testimonials/actions.ts
+ GET /admin/testimonials 200 in 715ms (next.js: 4ms, proxy.ts: 492ms, application-code: 219ms)
+ GET /admin/testimonials 200 in 1163ms (next.js: 8ms, proxy.ts: 470ms, application-code: 685ms)
+ POST /admin/testimonials 200 in 3.0s (next.js: 5ms, proxy.ts: 1503ms, application-code: 1522ms)
+  └─ ƒ deleteTestimonial("1b0b2a71-0817-4070-a498-ca178d34c036") in 910ms testimonials/actions.ts
+ GET /admin/testimonials 200 in 1719ms (next.js: 5ms, proxy.ts: 1481ms, application-code: 234ms)
+ GET /admin/testimonials 200 in 2.1s (next.js: 4ms, proxy.ts: 483ms, application-code: 1637ms)
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <SegmentViewNode type="page" pagePath="testimonia...">
+      <SegmentTrieNode>
+      <TestimonialsPage>
+        <div>
+        <TestimonialsList initialTestimonials={[...]}>
+          <DndContext sensors={[...]} collisionDetection={function closestCenter} onDragEnd={function handleDragEnd}>
+            <SortableContext items={[...]} strategy={function verticalListSortingStrategy}>
+              <div className="space-y-4">
+                <SortableTestimonial testimonial={{id:"2420f7...", ...}}>
+                  <div ref={function useCombinedRefs.useMemo} style={{...}} className="bg-slate-8...">
+                    <div className="flex items...">
+                      <button
+                        role="button"
+                        tabIndex={0}
+                        aria-disabled={false}
+                        aria-pressed={undefined}
+                        aria-roledescription="sortable"
++                       aria-describedby="DndDescribedBy-0"
+-                       aria-describedby="DndDescribedBy-1"
+                        onPointerDown={function useSyntheticListeners.useMemo}
+                        onKeyDown={function useSyntheticListeners.useMemo}
+                        className="cursor-grab active:cursor-grabbing text-slate-500 hover:text-[#DB9844] transition-c..."
+                      >
+                      ...
+                    ...
+                <SortableTestimonial testimonial={{id:"a810c9...", ...}}>
+                  <div ref={function useCombinedRefs.useMemo} style={{...}} className="bg-slate-8...">
+                    <div className="flex items...">
+                      <button
+                        role="button"
+                        tabIndex={0}
+                        aria-disabled={false}
+                        aria-pressed={undefined}
+                        aria-roledescription="sortable"
++                       aria-describedby="DndDescribedBy-0"
+-                       aria-describedby="DndDescribedBy-1"
+                        onPointerDown={function useSyntheticListeners.useMemo}
+                        onKeyDown={function useSyntheticListeners.useMemo}
+                        className="cursor-grab active:cursor-grabbing text-slate-500 hover:text-[#DB9844] transition-c..."
+                      >
+                      ...
+                    ...
+                <SortableTestimonial testimonial={{id:"73a369...", ...}}>
+                  <div ref={function useCombinedRefs.useMemo} style={{...}} className="bg-slate-8...">
+                    <div className="flex items...">
+                      <button
+                        role="button"
+                        tabIndex={0}
+                        aria-disabled={false}
+                        aria-pressed={undefined}
+                        aria-roledescription="sortable"
++                       aria-describedby="DndDescribedBy-0"
+-                       aria-describedby="DndDescribedBy-1"
+                        onPointerDown={function useSyntheticListeners.useMemo}
+                        onKeyDown={function useSyntheticListeners.useMemo}
+                        className="cursor-grab active:cursor-grabbing text-slate-500 hover:text-[#DB9844] transition-c..."
+                      >
+                      ...
+                    ...
+                <SortableTestimonial testimonial={{id:"76560c...", ...}}>
+                  <div ref={function useCombinedRefs.useMemo} style={{...}} className="bg-slate-8...">
+                    <div className="flex items...">
+                      <button
+                        role="button"
+                        tabIndex={0}
+                        aria-disabled={false}
+                        aria-pressed={undefined}
+                        aria-roledescription="sortable"
++                       aria-describedby="DndDescribedBy-0"
+-                       aria-describedby="DndDescribedBy-1"
+                        onPointerDown={function useSyntheticListeners.useMemo}
+                        onKeyDown={function useSyntheticListeners.useMemo}
+                        className="cursor-grab active:cursor-grabbing text-slate-500 hover:text-[#DB9844] transition-c..."
+                      >
+                      ...
+                    ...
+                <SortableTestimonial testimonial={{id:"cdd789...", ...}}>
+                  <div ref={function useCombinedRefs.useMemo} style={{...}} className="bg-slate-8...">
+                    <div className="flex items...">
+                      <button
+                        role="button"
+                        tabIndex={0}
+                        aria-disabled={false}
+                        aria-pressed={undefined}
+                        aria-roledescription="sortable"
++                       aria-describedby="DndDescribedBy-0"
+-                       aria-describedby="DndDescribedBy-1"
+                        onPointerDown={function useSyntheticListeners.useMemo}
+                        onKeyDown={function useSyntheticListeners.useMemo}
+                        className="cursor-grab active:cursor-grabbing text-slate-500 hover:text-[#DB9844] transition-c..."
+                      >
+                      ...
+                    ...
+            ...
+            ...
+    ...
+ 
+ GET /admin 200 in 1210ms (next.js: 8ms, proxy.ts: 175ms, application-code: 1027ms)
+ GET /admin/testimonials 200 in 649ms (next.js: 5ms, proxy.ts: 451ms, application-code: 193ms)
+ GET /admin/testimonials/new 200 in 552ms (next.js: 16ms, proxy.ts: 511ms, application-code: 26ms)
+ GET /admin/testimonials 200 in 422ms (next.js: 5ms, proxy.ts: 157ms, application-code: 259ms)
+ POST /admin/testimonials/new 200 in 1748ms (next.js: 5ms, proxy.ts: 584ms, application-code: 1159ms)
+  └─ ƒ createTestimonial({}) in 722ms testimonials/actions.ts
+ GET /admin/testimonials 200 in 753ms (next.js: 24ms, proxy.ts: 653ms, application-code: 77ms)
+ GET /admin/testimonials 200 in 521ms (next.js: 22ms, proxy.ts: 447ms, application-code: 52ms)
+ GET /admin/testimonials 200 in 543ms (next.js: 20ms, proxy.ts: 455ms, application-code: 68ms)
+ GET /admin/testimonials 200 in 568ms (next.js: 5ms, proxy.ts: 507ms, application-code: 56ms)
+ GET /admin/testimonials 200 in 547ms (next.js: 16ms, proxy.ts: 458ms, application-code: 73ms)
+ GET /admin/testimonials 200 in 1730ms (next.js: 81ms, proxy.ts: 1469ms, application-code: 180ms)
+ POST /admin/testimonials 200 in 2.6s (next.js: 9ms, proxy.ts: 1576ms, application-code: 980ms)
+  └─ ƒ reorderTestimonials(["52546909-9e29-4c8f-aea1-9ee11f2c4d01","2420f72b-24c1-4d26-a82e-5f89aba5f036","a810c9b9-48e7-4d2f-bf02-fd6d7faacd1b","... 2 items not stringified"]) in 674ms testimonials/actions.ts
+ POST /admin/testimonials 200 in 2.3s (next.js: 6ms, proxy.ts: 809ms, application-code: 1450ms)
+  └─ ƒ deleteTestimonial("52546909-9e29-4c8f-aea1-9ee11f2c4d01") in 938ms testimonials/actions.ts
+ GET /admin/testimonials 200 in 828ms (next.js: 4ms, proxy.ts: 561ms, application-code: 263ms)
+ GET /admin/testimonials 200 in 1219ms (next.js: 5ms, proxy.ts: 533ms, application-code: 682ms)
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <SegmentViewNode type="page" pagePath="testimonia...">
+      <SegmentTrieNode>
+      <TestimonialsPage>
+        <div>
+        <TestimonialsList initialTestimonials={[...]}>
+          <DndContext sensors={[...]} collisionDetection={function closestCenter} onDragEnd={function handleDragEnd}>
+            <SortableContext items={[...]} strategy={function verticalListSortingStrategy}>
+              <div className="space-y-4">
+                <SortableTestimonial testimonial={{id:"2420f7...", ...}}>
+                  <div ref={function useCombinedRefs.useMemo} style={{...}} className="bg-slate-8...">
+                    <div className="flex items...">
+                      <button
+                        role="button"
+                        tabIndex={0}
+                        aria-disabled={false}
+                        aria-pressed={undefined}
+                        aria-roledescription="sortable"
++                       aria-describedby="DndDescribedBy-0"
+-                       aria-describedby="DndDescribedBy-2"
+                        onPointerDown={function useSyntheticListeners.useMemo}
+                        onKeyDown={function useSyntheticListeners.useMemo}
+                        className="cursor-grab active:cursor-grabbing text-slate-500 hover:text-[#DB9844] transition-c..."
+                      >
+                      ...
+                    ...
+                <SortableTestimonial testimonial={{id:"a810c9...", ...}}>
+                  <div ref={function useCombinedRefs.useMemo} style={{...}} className="bg-slate-8...">
+                    <div className="flex items...">
+                      <button
+                        role="button"
+                        tabIndex={0}
+                        aria-disabled={false}
+                        aria-pressed={undefined}
+                        aria-roledescription="sortable"
++                       aria-describedby="DndDescribedBy-0"
+-                       aria-describedby="DndDescribedBy-2"
+                        onPointerDown={function useSyntheticListeners.useMemo}
+                        onKeyDown={function useSyntheticListeners.useMemo}
+                        className="cursor-grab active:cursor-grabbing text-slate-500 hover:text-[#DB9844] transition-c..."
+                      >
+                      ...
+                    ...
+                <SortableTestimonial testimonial={{id:"73a369...", ...}}>
+                  <div ref={function useCombinedRefs.useMemo} style={{...}} className="bg-slate-8...">
+                    <div className="flex items...">
+                      <button
+                        role="button"
+                        tabIndex={0}
+                        aria-disabled={false}
+                        aria-pressed={undefined}
+                        aria-roledescription="sortable"
++                       aria-describedby="DndDescribedBy-0"
+-                       aria-describedby="DndDescribedBy-2"
+                        onPointerDown={function useSyntheticListeners.useMemo}
+                        onKeyDown={function useSyntheticListeners.useMemo}
+                        className="cursor-grab active:cursor-grabbing text-slate-500 hover:text-[#DB9844] transition-c..."
+                      >
+                      ...
+                    ...
+                <SortableTestimonial testimonial={{id:"76560c...", ...}}>
+                  <div ref={function useCombinedRefs.useMemo} style={{...}} className="bg-slate-8...">
+                    <div className="flex items...">
+                      <button
+                        role="button"
+                        tabIndex={0}
+                        aria-disabled={false}
+                        aria-pressed={undefined}
+                        aria-roledescription="sortable"
++                       aria-describedby="DndDescribedBy-0"
+-                       aria-describedby="DndDescribedBy-2"
+                        onPointerDown={function useSyntheticListeners.useMemo}
+                        onKeyDown={function useSyntheticListeners.useMemo}
+                        className="cursor-grab active:cursor-grabbing text-slate-500 hover:text-[#DB9844] transition-c..."
+                      >
+                      ...
+                    ...
+                <SortableTestimonial testimonial={{id:"cdd789...", ...}}>
+                  <div ref={function useCombinedRefs.useMemo} style={{...}} className="bg-slate-8...">
+                    <div className="flex items...">
+                      <button
+                        role="button"
+                        tabIndex={0}
+                        aria-disabled={false}
+                        aria-pressed={undefined}
+                        aria-roledescription="sortable"
++                       aria-describedby="DndDescribedBy-0"
+-                       aria-describedby="DndDescribedBy-2"
+                        onPointerDown={function useSyntheticListeners.useMemo}
+                        onKeyDown={function useSyntheticListeners.useMemo}
+                        className="cursor-grab active:cursor-grabbing text-slate-500 hover:text-[#DB9844] transition-c..."
+                      >
+                      ...
+                    ...
+            ...
+            ...
+    ...
+ 
+ GET /admin 200 in 1272ms (next.js: 73ms, proxy.ts: 211ms, application-code: 988ms)
+ GET /admin/testimonials 200 in 774ms (next.js: 20ms, proxy.ts: 474ms, application-code: 280ms)
+ GET /admin/testimonials/new 200 in 550ms (next.js: 55ms, proxy.ts: 466ms, application-code: 29ms)
+ GET /admin/testimonials 200 in 408ms (next.js: 8ms, proxy.ts: 157ms, application-code: 243ms)
+ POST /admin/testimonials/new 200 in 1772ms (next.js: 9ms, proxy.ts: 632ms, application-code: 1130ms)
+  └─ ƒ createTestimonial({}) in 698ms testimonials/actions.ts
+ POST /admin/testimonials 200 in 1427ms (next.js: 8ms, proxy.ts: 465ms, application-code: 955ms)
+  └─ ƒ reorderTestimonials(["7e5d1b7d-e9b3-47f2-8474-94b3e3dd7ac6","2420f72b-24c1-4d26-a82e-5f89aba5f036","a810c9b9-48e7-4d2f-bf02-fd6d7faacd1b","... 2 items not stringified"]) in 666ms testimonials/actions.ts
+^C^C

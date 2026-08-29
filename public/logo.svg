@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 500 500">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #fff;
+      }
+    </style>
+  </defs>
+  <!-- Generator: Adobe Illustrator 28.7.5, SVG Export Plug-In . SVG Version: 1.2.0 Build 176)  -->
+  <g>
+    <g id="_Слой_1" data-name="Слой_1">
+      <g>
+        <polygon class="cls-1" points="0 470.63 194.14 30.21 195.12 87.19 33.82 452.27 0 470.63"/>
+        <polygon class="cls-1" points="28.01 428.13 303.29 284.21 314.86 312.22 .83 469.65 28.01 428.13"/>
+        <polygon class="cls-1" points="380.52 429.8 469.42 233.03 497.17 225.54 388.26 468.68 380.52 429.8"/>
+        <polygon class="cls-1" points="487.95 246.02 190.05 50.25 194.44 29.37 500 220.57 487.95 246.02"/>
+        <polygon class="cls-1" points="400.79 439.22 194.44 29.37 194.44 89.58 388.26 468.68 400.79 439.22"/>
+      </g>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,157 @@
+import { createClient } from '@/lib/supabase/server';
+import Link from 'next/link';
+
+const accentClasses = {
+  AF5D3E: {
+    iconBackground: 'bg-[#AF5D3E]/10 group-hover:bg-[#AF5D3E]/20',
+    iconText: 'text-[#AF5D3E]',
+  },
+  DB9844: {
+    iconBackground: 'bg-[#DB9844]/10 group-hover:bg-[#DB9844]/20',
+    iconText: 'text-[#DB9844]',
+  },
+} as const;
+
+type AccentColor = keyof typeof accentClasses;
+
+export default async function AdminDashboard() {
+  const supabase = await createClient();
+
+  const [portfolioCount, pricingCount, testimonialsCount, employeesCount, activityResult] =
+    await Promise.all([
+      supabase.from('portfolio_items').select('*', { count: 'exact', head: true }).eq('visible', true),
+      supabase.from('pricing').select('*', { count: 'exact', head: true }).eq('visible', true),
+      supabase.from('testimonials').select('*', { count: 'exact', head: true }).eq('published', true),
+      supabase.from('employees').select('*', { count: 'exact', head: true }).eq('published', true),
+      supabase.from('activity_logs').select('*').order('created_at', { ascending: false }).limit(10),
+    ]);
+
+  const stats = [
+    { label: 'Портфолио', count: portfolioCount.count || 0, href: '/admin/portfolio', color: 'AF5D3E' as AccentColor, suffix: 'опубликовано' },
+    { label: 'Цены', count: pricingCount.count || 0, href: '/admin/pricing', color: 'DB9844' as AccentColor, suffix: 'услуг' },
+    { label: 'Отзывы', count: testimonialsCount.count || 0, href: '/admin/testimonials', color: 'AF5D3E' as AccentColor, suffix: 'опубликовано' },
+    { label: 'Сотрудники', count: employeesCount.count || 0, href: '/admin/employees', color: 'DB9844' as AccentColor, suffix: 'опубликовано' },
+  ];
+
+  const activityLogs = activityResult.data || [];
+
+  const actionLabels: Record<string, string> = {
+    create: 'Создал',
+    update: 'Изменил',
+    delete: 'Удалил',
+    publish: 'Опубликовал',
+    unpublish: 'Снял с публикации',
+  };
+
+  const entityLabels: Record<string, string> = {
+    portfolio: 'проект',
+    pricing: 'услугу',
+    testimonials: 'отзыв',
+    employees: 'сотрудника',
+  };
+
+  const quickActions = [
+    { label: 'Добавить проект', desc: 'В портфолио', href: '/admin/portfolio/new', color: 'AF5D3E' as AccentColor },
+    { label: 'Добавить услугу', desc: 'В прайс-лист', href: '/admin/pricing/new', color: 'DB9844' as AccentColor },
+    { label: 'Добавить отзыв', desc: 'Отзыв пациента', href: '/admin/testimonials/new', color: 'AF5D3E' as AccentColor },
+  ];
+
+  return (
+    <>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-white mb-2">Панель управления</h1>
+        <p className="text-slate-400">Добро пожаловать в админ-панель CMS</p>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {stats.map((stat) => (
+          <Link key={stat.href} href={stat.href}>
+            <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl border border-slate-700/50 p-5 hover:border-[#DB9844]/50 transition-all cursor-pointer group">
+              <div className="flex items-center justify-between mb-3">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${accentClasses[stat.color].iconBackground} transition-colors`}>
+                  <span className={`${accentClasses[stat.color].iconText} text-lg font-bold`}>{stat.count}</span>
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-white mb-0.5">{stat.count}</div>
+              <div className="text-sm text-slate-400">{stat.suffix}</div>
+              <div className="text-xs text-slate-500 mt-1">{stat.label}</div>
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Quick Actions */}
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl border border-slate-700/50 p-6">
+          <h2 className="text-lg font-bold text-white mb-4">Быстрые действия</h2>
+          <div className="space-y-3">
+            {quickActions.map((action) => (
+              <Link key={action.href} href={action.href}>
+                <button className="w-full p-3 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-left transition-all group">
+                  <div className="flex items-center">
+                    <div className={`w-9 h-9 ${accentClasses[action.color].iconBackground} rounded-lg flex items-center justify-center mr-3 transition-colors`}>
+                      <svg className={`w-4 h-4 ${accentClasses[action.color].iconText}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="text-white text-sm font-medium">{action.label}</div>
+                      <div className="text-slate-400 text-xs">{action.desc}</div>
+                    </div>
+                  </div>
+                </button>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="lg:col-span-2 bg-slate-800/50 backdrop-blur-xl rounded-xl border border-slate-700/50 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-white">Последние действия</h2>
+          </div>
+
+          {activityLogs.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-slate-400 text-sm">Пока нет действий</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {activityLogs.map((log) => (
+                <div key={log.id} className="flex items-start gap-3 p-3 rounded-lg bg-slate-700/30">
+                  <div className="w-8 h-8 rounded-full bg-slate-600/50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg className="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-white">
+                      <span className="text-slate-400">{log.user_email?.split('@')[0]}</span>
+                      {' '}
+                      <span className="text-[#DB9844]">{actionLabels[log.action] || log.action}</span>
+                      {' '}
+                      {entityLabels[log.entity_type] || log.entity_type}
+                      {log.entity_name && (
+                        <> &laquo;<span className="text-slate-300">{log.entity_name}</span>&raquo;</>
+                      )}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {new Date(log.created_at).toLocaleString('ru-RU', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}

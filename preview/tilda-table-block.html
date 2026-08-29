@@ -1,0 +1,547 @@
+<!-- ===== ПРАЙС-ЛИСТ ДЛЯ TILDA ===== -->
+<!-- Вставь этот блок HTML на страницу Tilda вместо старого блока таблицы -->
+
+<div class="clinic-priceboard" id="clinic-priceboard">
+  <aside class="clinic-priceboard__left" aria-label="Разделы услуг">
+    <div class="clinic-priceboard__intro">
+      <div class="clinic-priceboard__title">Наши услуги</div>
+    </div>
+    <nav class="clinic-tabs" aria-label="Основные разделы"></nav>
+  </aside>
+  <section class="clinic-priceboard__right" aria-live="polite">
+    <header class="clinic-head">
+      <div class="clinic-kicker">Прайс-лист</div>
+      <h2 class="clinic-panel-title" id="panelTitle">Загрузка...</h2>
+    </header>
+    <div class="clinic-subtabs" id="clinicSubtabs" aria-label="Подразделы"></div>
+    <div class="clinic-mobile-hint" aria-hidden="true">
+      Выберите раздел сверху и листайте услуги свайпом
+    </div>
+    <div class="clinic-slider">
+      <button class="clinic-nav clinic-prev" type="button" aria-label="Предыдущий пункт">&#8249;</button>
+      <div class="clinic-viewport"><div class="clinic-track" id="clinicTrack"></div></div>
+      <button class="clinic-nav clinic-next" type="button" aria-label="Следующий пункт">&#8250;</button>
+    </div>
+  </section>
+  <div class="clinic-detail-modal" id="clinicDetailModal" hidden>
+    <div class="clinic-detail-modal__backdrop" data-detail-close></div>
+    <div class="clinic-detail-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="clinicDetailTitle">
+      <button class="clinic-detail-modal__close" type="button" aria-label="Закрыть описание" data-detail-close>&times;</button>
+      <h3 class="clinic-detail-modal__title" id="clinicDetailTitle"></h3>
+      <p class="clinic-detail-modal__text" id="clinicDetailText"></p>
+      <div class="clinic-detail-modal__price" id="clinicDetailPrice"></div>
+    </div>
+  </div>
+</div>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+
+/* === BASE === */
+#clinic-priceboard.clinic-priceboard{
+  --clinic-accent:#DB9844;--clinic-accent-dark:#a96418;
+  --clinic-text:#2f2013;--clinic-muted:#755b45;
+  --clinic-line:rgba(219,152,68,.2);
+  width:1920px;max-width:100%;
+  aspect-ratio:16/9;
+  margin:0 auto;
+  display:grid;grid-template-columns:minmax(360px,38%) minmax(0,1fr);
+  overflow:hidden;border-radius:32px;background:#fff;
+  box-shadow:0 28px 80px rgba(0,0,0,.14);
+  font-family:'Montserrat',Arial,sans-serif;
+  box-sizing:border-box;
+}
+#clinic-priceboard,#clinic-priceboard *{box-sizing:border-box}
+#clinic-priceboard button{font-family:inherit}
+
+/* === LEFT PANEL === */
+#clinic-priceboard .clinic-priceboard__left{
+  min-width:0;padding:clamp(32px,4vw,54px) clamp(24px,3vw,42px);
+  color:#fff;background:var(--clinic-accent);
+  display:flex;flex-direction:column;justify-content:center;
+  gap:28px;text-align:center;overflow-y:auto;
+  height:100%;
+}
+#clinic-priceboard .clinic-priceboard__intro{display:grid;justify-items:center;gap:18px}
+#clinic-priceboard .clinic-priceboard__title{
+  margin:0;font-size:clamp(42px,4vw,62px);
+  line-height:.98;font-weight:800;letter-spacing:-.05em;
+}
+#clinic-priceboard .clinic-tabs{display:grid;gap:14px}
+#clinic-priceboard .clinic-tab{
+  width:100%;min-height:56px;appearance:none;
+  border:2px solid rgba(255,255,255,.9);background:transparent;
+  color:#fff;border-radius:20px;padding:14px 18px;
+  font-size:18px;font-weight:700;cursor:pointer;text-align:center;
+  transition:transform .2s,background-color .2s,color .2s,box-shadow .2s;
+}
+#clinic-priceboard .clinic-tab:hover{transform:translateY(-1px);background:rgba(255,255,255,.14)}
+#clinic-priceboard .clinic-tab.active{
+  background:#fff;color:var(--clinic-accent-dark);
+  border-color:#fff;box-shadow:0 14px 28px rgba(0,0,0,.12);
+}
+
+/* === RIGHT PANEL === */
+#clinic-priceboard .clinic-priceboard__right{
+  min-width:0;padding:clamp(28px,3vw,42px);background:#fff;
+  display:flex;flex-direction:column;gap:18px;
+  min-height:0;overflow:hidden;
+  height:100%;
+}
+#clinic-priceboard .clinic-head{
+  display:grid;justify-items:center;gap:8px;
+  padding-bottom:18px;border-bottom:1px solid var(--clinic-line);
+  text-align:center;flex-shrink:0;
+}
+#clinic-priceboard .clinic-kicker{
+  font-size:13px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--clinic-accent-dark);font-weight:800;
+}
+#clinic-priceboard .clinic-panel-title{
+  margin:0;font-size:clamp(28px,3vw,40px);
+  line-height:1.05;font-weight:800;color:var(--clinic-text);letter-spacing:-.04em;
+}
+
+/* === SUBTABS === */
+#clinic-priceboard .clinic-subtabs{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;flex-shrink:0;
+}
+#clinic-priceboard .clinic-subtab{
+  width:100%;min-height:58px;display:flex;
+  align-items:center;justify-content:center;gap:10px;
+  padding:14px 16px;border:1px solid var(--clinic-line);
+  border-radius:18px;background:#fff;color:var(--clinic-accent-dark);
+  cursor:pointer;box-shadow:0 10px 20px rgba(0,0,0,.04);
+  text-align:center;
+  transition:transform .2s,border-color .2s,background-color .2s,color .2s;
+}
+#clinic-priceboard .clinic-subtab:hover{transform:translateY(-1px);border-color:var(--clinic-accent)}
+#clinic-priceboard .clinic-subtab.active{
+  background:var(--clinic-accent);color:#fff;border-color:var(--clinic-accent);
+}
+#clinic-priceboard .clinic-subtab__name{font-size:14px;font-weight:800;line-height:1.25}
+#clinic-priceboard .clinic-subtab__arrow{font-size:22px;line-height:1}
+
+/* === SLIDER === */
+#clinic-priceboard .clinic-slider{
+  flex:1 1 auto;display:grid;
+  grid-template-columns:56px minmax(0,1fr) 56px;
+  gap:14px;align-items:stretch;min-height:0;
+  overflow:hidden;
+}
+#clinic-priceboard .clinic-nav{
+  width:56px;height:56px;border:0;border-radius:0;
+  background:transparent;color:var(--clinic-accent-dark);
+  font-size:48px;font-weight:400;line-height:1;
+  cursor:pointer;box-shadow:none;
+  transition:transform .25s,color .25s,opacity .25s;
+  align-self:center;justify-self:center;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  padding:0;-webkit-tap-highlight-color:transparent;
+}
+#clinic-priceboard .clinic-nav:hover:not(:disabled){color:var(--clinic-accent);transform:scale(1.15)}
+#clinic-priceboard .clinic-nav.clinic-prev:hover:not(:disabled){transform:translateX(-3px) scale(1.1)}
+#clinic-priceboard .clinic-nav.clinic-next:hover:not(:disabled){transform:translateX(3px) scale(1.1)}
+#clinic-priceboard .clinic-nav:disabled{opacity:.25;cursor:default;box-shadow:none;color:#b8a48c}
+#clinic-priceboard .clinic-nav:active:not(:disabled){transform:scale(.95)}
+#clinic-priceboard .clinic-viewport{
+  overflow:hidden;overflow-y:auto;min-width:0;width:100%;height:100%;
+  position:relative;transition:height .3s;
+}
+#clinic-priceboard .clinic-track{
+  display:flex;width:100%;min-height:100%;
+  transition:transform .45s cubic-bezier(.22,.61,.36,1);
+  will-change:transform;
+}
+#clinic-priceboard .clinic-slide{
+  flex:0 0 100%;width:100%;min-height:100%;
+  padding:6px 0;display:flex;
+}
+
+/* === CARD === */
+#clinic-priceboard .clinic-card{
+  width:100%;min-height:100%;background:#fff;
+  border:1px solid var(--clinic-line);
+  border-left:7px solid var(--clinic-accent);
+  border-radius:24px;box-shadow:0 16px 36px rgba(0,0,0,.06);
+  padding:clamp(20px,2.5vw,30px);
+  display:flex;flex-direction:column;gap:18px;
+  overflow-y:auto;animation:clinicIn .34s ease;
+}
+#clinic-priceboard .clinic-card::-webkit-scrollbar{width:6px}
+#clinic-priceboard .clinic-card::-webkit-scrollbar-thumb{background:rgba(219,152,68,.45);border-radius:10px}
+#clinic-priceboard .clinic-card-top{
+  display:grid;justify-items:center;gap:8px;text-align:center;flex-shrink:0;
+}
+#clinic-priceboard .clinic-card-title{
+  margin:0;font-size:clamp(22px,2vw,28px);
+  line-height:1.16;font-weight:800;color:var(--clinic-text);letter-spacing:-.02em;
+}
+#clinic-priceboard .clinic-card-subtitle-title{
+  margin:0;font-size:clamp(17px,1.6vw,20px);
+  line-height:1.25;font-weight:800;color:var(--clinic-accent-dark);letter-spacing:-.01em;
+}
+#clinic-priceboard .clinic-card-subtitle{
+  max-width:920px;margin:0;font-size:14px;
+  line-height:1.55;color:var(--clinic-muted);white-space:pre-line;
+}
+
+/* === TABLE ROWS === */
+#clinic-priceboard .clinic-table{display:flex;flex-direction:column;gap:0;flex:1}
+#clinic-priceboard .clinic-row{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(120px,auto);
+  gap:18px;align-items:start;padding:14px 0;
+  border-top:1px solid var(--clinic-line);
+}
+#clinic-priceboard .clinic-row:first-child{border-top:0}
+#clinic-priceboard .clinic-row__left{min-width:0;display:grid;gap:4px}
+#clinic-priceboard .clinic-row__name{
+  font-size:16px;font-weight:700;color:#3b2616;
+  line-height:1.35;word-break:break-word;
+}
+#clinic-priceboard .clinic-row__meta{
+  font-size:13px;color:#8a6a4b;line-height:1.45;
+  word-break:break-word;white-space:pre-line;
+}
+#clinic-priceboard .clinic-row__price{
+  justify-self:end;align-self:start;
+  font-size:18px;font-weight:800;color:var(--clinic-accent-dark);
+  white-space:nowrap;padding-top:2px;
+}
+#clinic-priceboard .clinic-row__actions{display:contents}
+#clinic-priceboard .clinic-row__info{display:none}
+#clinic-priceboard .clinic-empty{
+  text-align:center;padding:40px 20px;
+  color:var(--clinic-muted);font-size:15px;font-weight:500;
+}
+
+/* === SERVICE DETAILS (mobile interaction, hidden on desktop) === */
+#clinic-priceboard .clinic-mobile-hint,
+#clinic-priceboard .clinic-detail-modal{display:none}
+
+@keyframes clinicIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* === 1400px === */
+@media(max-width:1400px){
+  #clinic-priceboard.clinic-priceboard{width:100%;aspect-ratio:auto;height:auto;min-height:700px}
+}
+
+/* === 1200px — tablet landscape === */
+@media(max-width:1200px){
+  #clinic-priceboard.clinic-priceboard{
+    width:100%;aspect-ratio:auto;height:auto;min-height:0;
+    grid-template-columns:1fr;border-radius:28px;
+  }
+  #clinic-priceboard .clinic-priceboard__left{
+    justify-content:start;overflow-y:visible;gap:24px;
+  }
+  #clinic-priceboard .clinic-priceboard__right{overflow:visible}
+  #clinic-priceboard .clinic-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #clinic-priceboard .clinic-slider{align-items:stretch;min-height:380px}
+}
+
+/* === Mobile: compact fullscreen price list === */
+@media(max-width:767px){
+  #clinic-priceboard.clinic-priceboard{
+    width:100%;height:100vh;height:100svh;min-height:100vh;min-height:100svh;aspect-ratio:auto;
+    grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr);
+    border-radius:0;box-shadow:none;overflow:hidden;
+  }
+  #clinic-priceboard .clinic-priceboard__left{
+    display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;
+    padding:10px 0 0;gap:10px;overflow:hidden;
+  }
+  #clinic-priceboard .clinic-priceboard__intro{display:block;padding:0 12px}
+  #clinic-priceboard .clinic-priceboard__title{font-size:clamp(16px,4.4vw,20px);line-height:1.1;white-space:nowrap}
+  #clinic-priceboard .clinic-priceboard__intro:after{
+    content:'AMBER  ·  ПРАЙС-ЛИСТ';display:block;margin-top:4px;
+    color:rgba(255,255,255,.78);font-size:8px;font-weight:700;letter-spacing:.16em;
+  }
+  #clinic-priceboard .clinic-tabs,
+  #clinic-priceboard .clinic-subtabs{
+    display:flex;gap:8px;min-width:0;overflow-x:auto;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;
+  }
+  #clinic-priceboard .clinic-tabs::-webkit-scrollbar,
+  #clinic-priceboard .clinic-subtabs::-webkit-scrollbar{display:none}
+  #clinic-priceboard .clinic-tabs{width:100%;padding:8px 12px;background:#fffaf4}
+  #clinic-priceboard .clinic-tab,
+  #clinic-priceboard .clinic-subtab{
+    flex:0 0 auto;min-height:44px;padding:9px 11px;
+    border-radius:12px;font-size:12px;line-height:1.2;white-space:nowrap;
+  }
+  #clinic-priceboard .clinic-tab{width:auto;border-width:1px;border-color:var(--clinic-line);background:#fffaf4;color:var(--clinic-text)}
+  #clinic-priceboard .clinic-tab.active{background:#fff8ef;color:var(--clinic-accent-dark);border-color:var(--clinic-accent);border-bottom-width:2px;border-radius:12px;box-shadow:none}
+  #clinic-priceboard .clinic-subtab{gap:5px}
+  #clinic-priceboard .clinic-subtab__name{font-size:12px}
+  #clinic-priceboard .clinic-subtab__arrow{font-size:15px}
+
+  #clinic-priceboard .clinic-priceboard__right{
+    height:auto;min-height:0;padding:12px;gap:10px;overflow:hidden;
+  }
+  #clinic-priceboard .clinic-head{padding-bottom:8px;gap:3px}
+  #clinic-priceboard .clinic-kicker{font-size:10px;letter-spacing:.12em}
+  #clinic-priceboard .clinic-panel-title{font-size:clamp(18px,5vw,22px)}
+  #clinic-priceboard .clinic-mobile-hint{
+    display:flex;align-items:center;justify-content:center;
+    min-height:30px;max-height:36px;padding:6px 10px;
+    border:1px solid rgba(219,152,68,.22);border-radius:999px;
+    background:rgba(219,152,68,.1);color:var(--clinic-accent-dark);
+    font-size:11px;font-weight:600;line-height:1.2;text-align:center;
+    opacity:.78;pointer-events:none;overflow:hidden;
+    transition:max-height .2s ease,padding .2s ease,opacity .2s ease,border-width .2s ease;
+  }
+  #clinic-priceboard.clinic-priceboard--hint-seen .clinic-mobile-hint{
+    min-height:0;max-height:0;padding:0;opacity:0;border-width:0;
+  }
+
+  #clinic-priceboard .clinic-slider{
+    position:relative;display:block;flex:1 1 auto;min-height:0;overflow:hidden;
+  }
+  #clinic-priceboard .clinic-viewport{height:100%;overflow:hidden}
+  #clinic-priceboard .clinic-track{height:100%;min-height:0}
+  #clinic-priceboard .clinic-slide{height:100%;min-height:0;padding:0}
+  #clinic-priceboard .clinic-card{
+    height:100%;min-height:0;padding:14px 12px;gap:12px;
+    border-left-width:4px;border-radius:18px;overflow-y:auto;
+    overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  }
+  #clinic-priceboard .clinic-card-top{gap:5px}
+  #clinic-priceboard .clinic-card-title{font-size:clamp(17px,4.6vw,21px)}
+  #clinic-priceboard .clinic-card-subtitle-title{font-size:14px}
+  #clinic-priceboard .clinic-card-subtitle{font-size:12px;line-height:1.45}
+  #clinic-priceboard .clinic-row{
+    grid-template-columns:minmax(0,1fr) 44px 5.25rem;gap:8px;padding:11px 0;
+  }
+  #clinic-priceboard .clinic-row__name{font-size:14px;line-height:1.35}
+  #clinic-priceboard .clinic-row__meta{font-size:12px;line-height:1.35}
+  #clinic-priceboard .clinic-row__price{font-size:15px;padding-top:1px;align-self:center}
+  #clinic-priceboard .clinic-row__actions{display:contents}
+  #clinic-priceboard .clinic-row__info{
+    width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;
+    flex:0 0 44px;border:1px solid var(--clinic-accent);border-radius:50%;
+    background:#fff;color:var(--clinic-accent-dark);font-size:18px;font-weight:700;line-height:1;
+    cursor:pointer;touch-action:manipulation;align-self:center;justify-self:center;
+  }
+  #clinic-priceboard .clinic-nav{
+    position:absolute;z-index:2;top:50%;width:36px;height:36px;
+    border-radius:50%;background:rgba(255,255,255,.78);
+    box-shadow:0 4px 14px rgba(47,32,19,.14);backdrop-filter:blur(4px);
+    font-size:30px;transform:translateY(-50%);
+  }
+  #clinic-priceboard .clinic-prev{left:5px}
+  #clinic-priceboard .clinic-next{right:5px}
+  #clinic-priceboard .clinic-nav:active:not(:disabled){transform:translateY(-50%) scale(.94)}
+  #clinic-priceboard .clinic-detail-modal[hidden]{display:none}
+  #clinic-priceboard .clinic-detail-modal{
+    position:fixed;inset:0;z-index:20;display:flex;align-items:flex-end;justify-content:center;
+    padding:16px;background:rgba(47,32,19,.42);
+  }
+  #clinic-priceboard .clinic-detail-modal__backdrop{position:absolute;inset:0}
+  #clinic-priceboard .clinic-detail-modal__dialog{
+    position:relative;width:min(100%,420px);max-height:80vh;overflow:auto;
+    padding:22px 18px;border:1px solid var(--clinic-line);border-radius:22px;
+    background:#fff;box-shadow:0 20px 50px rgba(47,32,19,.22);
+  }
+  #clinic-priceboard .clinic-detail-modal__close{
+    position:absolute;top:8px;right:8px;width:44px;height:44px;border:0;border-radius:50%;
+    background:transparent;color:var(--clinic-muted);font-size:28px;line-height:1;cursor:pointer;
+  }
+  #clinic-priceboard .clinic-detail-modal__title{margin:0;padding-right:42px;color:var(--clinic-text);font-size:18px;line-height:1.3}
+  #clinic-priceboard .clinic-detail-modal__text{margin:16px 0 0;color:var(--clinic-muted);font-size:13px;line-height:1.5;white-space:pre-line}
+  #clinic-priceboard .clinic-detail-modal__price{margin-top:16px;color:var(--clinic-accent-dark);font-size:17px;font-weight:800}
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+(function(){
+  var SUPABASE_URL='https://pjujhrfkykxgzcexyyti.supabase.co';
+  var SUPABASE_KEY='sb_publishable_UZtIlbYBisAt6BIWSkiMqg_y09ZDEdw';
+
+  var root=document.getElementById("clinic-priceboard");
+  if(!root)return;
+  var tabsC=root.querySelector(".clinic-tabs"),
+      pTitle=root.querySelector("#panelTitle"),
+      subtabs=root.querySelector("#clinicSubtabs"),
+      track=root.querySelector("#clinicTrack"),
+      vp=root.querySelector(".clinic-viewport"),
+      prev=root.querySelector(".clinic-prev"),
+      nxt=root.querySelector(".clinic-next"),
+      detailModal=root.querySelector("#clinicDetailModal"),
+      detailTitle=root.querySelector("#clinicDetailTitle"),
+      detailText=root.querySelector("#clinicDetailText"),
+      detailPrice=root.querySelector("#clinicDetailPrice");
+
+  var data={};
+  var st={sec:null,sub:0,sl:0};
+  var CATEGORY_ORDER=['Диагностика','Профилактика и гигиена','Протезирование','Лечение','Хирургия','Имплантация'];
+
+  function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+  function isM(){return window.innerWidth<=767;}
+  function debounce(fn,ms){var t;return function(){clearTimeout(t);t=setTimeout(fn,ms);};}
+  function categoryRank(name){var index=CATEGORY_ORDER.indexOf(name);return index===-1?CATEGORY_ORDER.length:index;}
+  function sortCategories(a,b){return categoryRank(a)-categoryRank(b);}
+  function emptyCategory(name){return {title:name,subsections:[{name:'Общее',slides:[{subtitleTitle:'',subtitle:'',rows:[]}]}]};}
+  function getCategory(name){return data[name]||(isM()?emptyCategory(name):null);}
+  function categoryKeys(){
+    var keys=Object.keys(data);
+    if(isM()){
+      return CATEGORY_ORDER.concat(keys.filter(function(key){return CATEGORY_ORDER.indexOf(key)===-1;}));
+    }
+    return keys.sort(function(a,b){return (data[a].sortOrder||0)-(data[b].sortOrder||0);});
+  }
+
+  function syncH(){
+    if(isM()){vp.style.height="";track.style.height="";return;}
+    // On desktop (aspect-ratio mode), don't override height — let it fill the grid
+    if(window.innerWidth>1400){vp.style.height="";track.style.height="";return;}
+    vp.style.height="";track.style.height="";
+  }
+
+  function dismissMobileHint(){if(isM())root.classList.add("clinic-priceboard--hint-seen");}
+
+  function parseFeatures(item){
+    var raw=item.features;
+    if(Array.isArray(raw))raw=raw[0];
+    if(raw&&typeof raw==='string'){try{return JSON.parse(raw);}catch(e){return {};}}
+    if(raw&&typeof raw==='object')return raw;
+    return {};
+  }
+
+  function buildStructure(rows){
+    var cats={};
+    rows.forEach(function(r){
+      var cat=r.category||'\u0411\u0435\u0437 \u043a\u0430\u0442\u0435\u0433\u043e\u0440\u0438\u0438';
+      var sub=r.description||'\u041e\u0431\u0449\u0435\u0435';
+      if(!cats[cat])cats[cat]={title:cat,subsections:[]};
+      var subs=cats[cat].subsections;
+      var subObj=null;
+      for(var i=0;i<subs.length;i++){if(subs[i].name===sub){subObj=subs[i];break;}}
+      if(!subObj){subObj={name:sub,slides:[]};subs.push(subObj);}
+      var feat=parseFeatures(r);
+      var si=feat.slideIndex||0;
+      while(subObj.slides.length<=si){subObj.slides.push({subtitleTitle:'',subtitle:'',rows:[]});}
+      subObj.slides[si].rows.push({name:r.name||'',meta:r.duration||'',details:feat.meta||feat.subtitle||'',price:r.price||'\u2014'});
+      if(feat.subtitleTitle)subObj.slides[si].subtitleTitle=feat.subtitleTitle;
+      if(feat.subtitle)subObj.slides[si].subtitle=feat.subtitle;
+    });
+    return cats;
+  }
+
+  function rTabs(){
+    var k=categoryKeys();
+    if(!k.length){tabsC.innerHTML='';pTitle.textContent='\u041d\u0435\u0442 \u0434\u0430\u043d\u043d\u044b\u0445';return;}
+    tabsC.innerHTML=k.map(function(v){return'<button class="clinic-tab" type="button" data-tab="'+v+'">'+esc(data[v]?data[v].title:v)+'</button>';}).join("");
+    tabsC.querySelectorAll(".clinic-tab").forEach(function(t){t.addEventListener("click",function(){setSec(t.dataset.tab);});});
+    if(!st.sec||k.indexOf(st.sec)===-1)st.sec=k[0];
+  }
+
+  function rSub(){
+    var s=getCategory(st.sec);if(!s)return;
+    if(s.subsections.length<=1){subtabs.innerHTML='';st.sub=0;return;}
+    subtabs.innerHTML=s.subsections.map(function(sb,i){
+      return'<button class="clinic-subtab'+(i===st.sub?" active":"")+'" type="button" data-si="'+i+'"><span class="clinic-subtab__name">'+esc(sb.name)+'</span><span class="clinic-subtab__arrow" aria-hidden="true">&#8250;</span></button>';
+    }).join("");
+    subtabs.querySelectorAll(".clinic-subtab").forEach(function(b){
+      b.addEventListener("click",function(){st.sub=Number(b.dataset.si);st.sl=0;rSub();rSlides();});
+    });
+  }
+
+  function rSlides(){
+    var sec=getCategory(st.sec);if(!sec)return;
+    var sub=sec.subsections[st.sub];if(!sub)return;
+    var sl=sub.slides||[];
+    pTitle.textContent=sec.title;
+    var showSubName=sub.name&&sub.name!=='\u041e\u0431\u0449\u0435\u0435'&&sec.subsections.length>1;
+    track.innerHTML=sl.map(function(s){
+      return'<article class="clinic-slide"><div class="clinic-card"><div class="clinic-card-top">'
+        +'<h3 class="clinic-card-title">'+(showSubName?esc(sub.name):esc(sec.title))+'</h3>'
+        +(s.subtitleTitle?'<p class="clinic-card-subtitle-title">'+esc(s.subtitleTitle)+'</p>':'')
+        +(s.subtitle?'<p class="clinic-card-subtitle">'+esc(s.subtitle)+'</p>':'')
+        +'</div><div class="clinic-table">'
+         +(s.rows&&s.rows.length?s.rows.map(function(r){
+           return'<div class="clinic-row"><div class="clinic-row__left"><div class="clinic-row__name">'+esc(r.name)+'</div>'
+             +(r.meta?'<div class="clinic-row__meta">'+esc(r.meta)+'</div>':'')
+             +'</div><div class="clinic-row__actions"><button class="clinic-row__info" type="button" data-detail-name="'+esc(r.name)+'" data-detail-text="'+esc(r.details||r.meta||'')+'" data-detail-price="'+esc(r.price||"\u2014")+'" aria-label="Подробнее: '+esc(r.name)+'">?</button><div class="clinic-row__price">'+esc(r.price||"\u2014")+'</div></div></div>';
+         }).join(""):'<div class="clinic-empty">В этой категории пока нет опубликованных услуг</div>')
+        +'</div></div></article>';
+    }).join("");
+    track.style.transform="translateX(-"+(st.sl*100)+"%)";
+    prev.disabled=st.sl===0;nxt.disabled=st.sl>=sl.length-1;
+    requestAnimationFrame(syncH);
+    track.querySelectorAll("[data-detail-name]").forEach(function(button){
+      button.addEventListener("click",function(){
+        if(!isM())return;
+        detailTitle.textContent=button.getAttribute("data-detail-name")||'';
+        detailText.textContent=button.getAttribute("data-detail-text")||'Подробное описание услуги уточняйте у администратора клиники.';
+        detailPrice.textContent=button.getAttribute("data-detail-price")||'\u2014';
+        detailModal.hidden=false;
+        detailModal.querySelector("button.clinic-detail-modal__close").focus();
+      });
+    });
+  }
+
+  function render(){
+    tabsC.querySelectorAll(".clinic-tab").forEach(function(t){t.classList.toggle("active",t.dataset.tab===st.sec);});
+    rSub();rSlides();
+  }
+
+  function setSec(k){if(!data[k]&&!isM())return;st.sec=k;st.sub=0;st.sl=0;render();}
+
+  prev.addEventListener("click",function(){if(st.sl>0){st.sl--;rSlides();}});
+  nxt.addEventListener("click",function(){var sec=getCategory(st.sec);var sl=(sec&&sec.subsections[st.sub]||{}).slides||[];if(st.sl<sl.length-1){st.sl++;rSlides();}});
+  root.addEventListener("click",dismissMobileHint);
+  root.querySelectorAll("[data-detail-close]").forEach(function(button){
+    button.addEventListener("click",function(){detailModal.hidden=true;});
+  });
+  document.addEventListener("keydown",function(event){
+    if(event.key==="Escape"&&!detailModal.hidden)detailModal.hidden=true;
+  });
+
+  var tx=0,ty=0,sw=false;
+  vp.addEventListener("touchstart",function(e){tx=e.touches[0].clientX;ty=e.touches[0].clientY;sw=true;},{passive:true});
+  vp.addEventListener("touchend",function(e){
+    if(!sw)return;sw=false;
+    var dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;
+    if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>50){
+      dismissMobileHint();
+      var sec=getCategory(st.sec);var sl=(sec&&sec.subsections[st.sub]||{}).slides||[];
+      if(dx<0&&st.sl<sl.length-1){st.sl++;rSlides();}
+      else if(dx>0&&st.sl>0){st.sl--;rSlides();}
+    }
+  },{passive:true});
+
+  window.addEventListener("resize",debounce(syncH,100));
+
+  async function fetchPricing(){
+    try{
+      var client=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+      var result=await client.from('pricing')
+        .select('category,name,description,price,duration,order_index,features')
+        .eq('visible',true).order('order_index',{ascending:true});
+      if(result.error){console.error('Supabase error:',result.error);pTitle.textContent='\u041e\u0448\u0438\u0431\u043a\u0430 \u0437\u0430\u0433\u0440\u0443\u0437\u043a\u0438';return;}
+      var rows=result.data||[];
+      if(!rows.length){
+        pTitle.textContent='\u041f\u0440\u0430\u0439\u0441-\u043b\u0438\u0441\u0442 \u043f\u043e\u043a\u0430 \u043d\u0435 \u0437\u0430\u043f\u043e\u043b\u043d\u0435\u043d';
+        if(isM()){
+          data={};
+          rTabs();
+          st.sec=CATEGORY_ORDER[0];
+          render();
+        }else{
+          tabsC.innerHTML='';subtabs.innerHTML='';
+          track.innerHTML='<div class="clinic-empty">\u0414\u043e\u0431\u0430\u0432\u044c\u0442\u0435 \u0443\u0441\u043b\u0443\u0433\u0438 \u0447\u0435\u0440\u0435\u0437 \u0430\u0434\u043c\u0438\u043d-\u043f\u0430\u043d\u0435\u043b\u044c</div>';
+        }
+        return;
+      }
+      data=buildStructure(rows);
+      var sorted=categoryKeys();
+      if(!st.sec||!data[st.sec])st.sec=sorted[0];
+      rTabs();render();
+    }catch(err){console.error('Fetch error:',err);pTitle.textContent='\u041e\u0448\u0438\u0431\u043a\u0430 \u0437\u0430\u0433\u0440\u0443\u0437\u043a\u0438';}
+  }
+  fetchPricing();
+})();
+</script>

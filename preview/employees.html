@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Наши специалисты</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #ffffff; }
+
+    .specialists-section {
+      width: 100%;
+      background: #ffffff;
+      padding: clamp(20px, 4vw, 80px) clamp(12px, 4vw, 80px) clamp(40px, 5vw, 80px);
+      font-family: 'Montserrat', sans-serif;
+    }
+
+    .specialists-section .carousel-container {
+      position: relative;
+      width: 100%;
+      max-width: min(1100px, 90vw);
+      height: clamp(420px, 50vw, 580px);
+      margin: 0 auto;
+      perspective: 1200px;
+    }
+
+    .specialists-section .card {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: clamp(500px, 70vw, 860px);
+      max-width: 100%;
+      height: clamp(380px, 45vw, 540px);
+      transform: translateX(-50%);
+      border-radius: clamp(16px, 2vw, 32px);
+      overflow: hidden;
+      display: flex;
+      background: #AF5D3E;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.3), 0 15px 30px rgba(0,0,0,0.2);
+      transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      transform-origin: center center;
+    }
+
+    .specialists-section .card-0 {
+      z-index: 3;
+      transform: translateX(-50%) translate(0, 0) scale(1) rotate(0deg);
+      opacity: 1;
+    }
+
+    .specialists-section .card-1 {
+      z-index: 2;
+      transform: translateX(-50%) translate(clamp(30px, 4vw, 60px), clamp(10px, 1.5vw, 20px)) scale(0.97) rotate(1deg);
+      opacity: 1;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.25), 0 12px 24px rgba(0,0,0,0.18);
+    }
+
+    .specialists-section .card-2 {
+      z-index: 1;
+      transform: translateX(-50%) translate(clamp(60px, 8vw, 120px), clamp(20px, 3vw, 40px)) scale(0.94) rotate(2deg);
+      opacity: 1;
+      box-shadow: 0 15px 30px rgba(0,0,0,0.22), 0 8px 16px rgba(0,0,0,0.15);
+    }
+
+    .specialists-section .card-fly-left {
+      z-index: 4;
+      transform: translateX(-50%) translate(-130%, 30px) scale(0.85) rotate(-4deg);
+      opacity: 0;
+      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .specialists-section .card-exit {
+      z-index: 4;
+      transform: translateX(-50%) translate(-130%, 30px) scale(0.85) rotate(-4deg);
+      opacity: 0;
+      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .specialists-section .card-enter {
+      z-index: 4;
+      transform: translateX(-50%) translate(130%, -30px) scale(0.85) rotate(4deg);
+      opacity: 0;
+      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .specialists-section .card-photo {
+      width: 35%;
+      min-height: 100%;
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .specialists-section .card-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .specialists-section .card-photo .no-photo {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #AF5D3E;
+    }
+
+    .specialists-section .card-photo .no-photo svg {
+      width: clamp(40px, 5vw, 80px);
+      height: clamp(40px, 5vw, 80px);
+      color: rgba(255,255,255,0.3);
+    }
+
+    .specialists-section .card-photo::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: clamp(25px, 3vw, 50px);
+      height: 100%;
+      background: linear-gradient(to right, transparent, #AF5D3E);
+    }
+
+    .specialists-section .card-content {
+      flex: 1;
+      padding: clamp(20px, 3vw, 50px) clamp(20px, 3vw, 50px) clamp(16px, 2.5vw, 40px) clamp(16px, 2.5vw, 40px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      text-align: left;
+    }
+
+    .specialists-section .card-top {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .specialists-section .card-name {
+      font-size: clamp(18px, 2.2vw, 32px);
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.25;
+      margin-bottom: clamp(10px, 1.5vw, 20px);
+      text-align: left;
+      flex-shrink: 0;
+    }
+
+    .specialists-section .card-divider {
+      width: 100%;
+      height: 2px;
+      background: rgba(255,255,255,0.5);
+      margin-bottom: clamp(12px, 1.5vw, 24px);
+      flex-shrink: 0;
+    }
+
+    .specialists-section .card-roles {
+      font-size: clamp(13px, 1.2vw, 18px);
+      color: rgba(255,255,255,0.95);
+      line-height: 1.7;
+      text-align: left;
+      overflow: hidden;
+    }
+
+    .specialists-section .card-roles span {
+      display: block;
+    }
+
+    .specialists-section .card-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: clamp(12px, 2.5vw, 40px);
+      align-items: end;
+    }
+
+    .specialists-section .stat {
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .specialists-section .stat-value {
+      font-size: clamp(16px, 1.8vw, 28px);
+      font-weight: 800;
+      color: #DB9844;
+      margin-bottom: clamp(4px, 0.5vw, 8px);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .specialists-section .stat-bar {
+      width: 100%;
+      height: clamp(3px, 0.3vw, 5px);
+      background: rgba(255,255,255,0.3);
+      border-radius: 3px;
+      margin-bottom: clamp(5px, 0.6vw, 10px);
+      overflow: hidden;
+    }
+
+    .specialists-section .stat-bar-fill {
+      height: 100%;
+      background: #fff;
+      border-radius: 3px;
+      width: 100%;
+    }
+
+    .specialists-section .stat-label {
+      font-size: clamp(9px, 0.8vw, 12px);
+      color: rgba(255,255,255,0.85);
+      line-height: 1.4;
+      text-align: left;
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .specialists-section .card-nav-hint {
+      position: absolute;
+      right: clamp(15px, 2vw, 35px);
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: clamp(24px, 2.5vw, 40px);
+      color: rgba(255,255,255,0.6);
+      pointer-events: none;
+      font-weight: 300;
+    }
+
+    .loading-msg {
+      text-align: center;
+      padding: 40px;
+      color: #AF5D3E;
+      font-family: 'Montserrat', sans-serif;
+    }
+
+    /* === 1600px+ — large desktop === */
+    @media (min-width: 1600px) {
+      .specialists-section .carousel-container {
+        max-width: 1200px;
+      }
+    }
+
+    /* === 1200px — medium desktop === */
+    @media (max-width: 1200px) {
+      .specialists-section .card {
+        width: clamp(450px, 60vw, 700px);
+        height: clamp(360px, 40vw, 480px);
+      }
+    }
+
+    /* === 900px — tablet === */
+    @media (max-width: 900px) {
+      .specialists-section { padding: 40px 20px 60px 20px; }
+      .specialists-section .carousel-container {
+        height: auto; min-height: 620px;
+        display: flex; justify-content: center; align-items: flex-start;
+      }
+      .specialists-section .card {
+        flex-direction: column; width: 360px; max-width: 100%;
+        left: 50%; transform: translateX(-50%);
+        height: auto; min-height: 600px;
+      }
+      .specialists-section .card-0 { transform: translateX(-50%) translate(0, 0) scale(1) rotate(0deg); }
+      .specialists-section .card-1 { transform: translateX(-50%) translate(12px, 8px) scale(0.97) rotate(0.5deg); }
+      .specialists-section .card-2 { transform: translateX(-50%) translate(24px, 16px) scale(0.94) rotate(1deg); }
+      .specialists-section .card-fly-left { transform: translateX(-50%) translate(-130%, 30px) scale(0.85) rotate(-4deg); }
+      .specialists-section .card-exit { transform: translateX(-50%) translate(-130%, 30px) scale(0.85) rotate(-4deg); }
+      .specialists-section .card-enter { transform: translateX(-50%) translate(130%, -30px) scale(0.85) rotate(4deg); }
+      .specialists-section .card-photo {
+        width: 100%; height: 380px; flex-shrink: 0; overflow: hidden;
+      }
+      .specialists-section .card-photo img {
+        width: 100%; height: 100%; object-fit: cover; object-position: top center;
+      }
+      .specialists-section .card-photo::after {
+        width: 100%; height: 60px; top: auto; bottom: 0;
+        background: linear-gradient(to top, #AF5D3E, transparent);
+      }
+      .specialists-section .card-content { padding: 24px 24px; text-align: center; }
+      .specialists-section .card-top { height: auto; }
+      .specialists-section .card-name { font-size: 22px; margin-bottom: 14px; text-align: center; }
+      .specialists-section .card-divider { margin-bottom: 16px; }
+      .specialists-section .card-roles { font-size: 14px; margin-bottom: 20px; text-align: center; }
+      .specialists-section .card-stats { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+      .specialists-section .stat { text-align: center; display: flex; flex-direction: column; }
+      .specialists-section .stat-value { font-size: 20px; text-align: center; white-space: nowrap; }
+      .specialists-section .stat-label {
+        font-size: 11px; text-align: center;
+        display: flex; align-items: flex-end; justify-content: center;
+      }
+      .specialists-section .card-nav-hint { font-size: 32px; right: 20px; }
+    }
+
+    /* === 420px — mobile === */
+    @media (max-width: 420px) {
+      .specialists-section { padding: 20px 12px 40px 12px; }
+      .specialists-section .carousel-container { min-height: 560px; }
+      .specialists-section .card {
+        width: 310px; max-width: calc(100% - 24px);
+        min-height: 540px; border-radius: 20px;
+      }
+      .specialists-section .card-photo { height: 320px; }
+      .specialists-section .card-content { padding: 20px 16px 24px 16px; }
+      .specialists-section .card-name { font-size: 19px; margin-bottom: 12px; }
+      .specialists-section .card-roles { font-size: 13px; margin-bottom: 16px; }
+      .specialists-section .card-stats { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+      .specialists-section .stat { min-width: 0; display: flex; flex-direction: column; }
+      .specialists-section .stat-value { font-size: 17px; white-space: nowrap; }
+      .specialists-section .stat-label {
+        font-size: 10px;
+        display: flex; align-items: flex-end; justify-content: center;
+      }
+    }
+
+    /* === 360px — small mobile === */
+    @media (max-width: 360px) {
+      .specialists-section .card { width: 280px; min-height: 500px; }
+      .specialists-section .card-photo { height: 280px; }
+      .specialists-section .card-name { font-size: 17px; }
+      .specialists-section .stat-value { font-size: 15px; white-space: nowrap; height: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="specialists-section">
+    <div class="carousel-container" id="carousel">
+      <div class="loading-msg">Загрузка сотрудников...</div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script>
+  (function() {
+    var SUPABASE_URL = 'https://pjujhrfkykxgzcexyyti.supabase.co';
+    var SUPABASE_KEY = 'sb_publishable_UZtIlbYBisAt6BIWSkiMqg_y09ZDEdw';
+    var STORAGE_BASE = SUPABASE_URL + '/storage/v1/object/public/employees/';
+
+    var container = document.getElementById('carousel');
+    if (!container) return;
+
+    var employees = [];
+    var currentIndex = 0;
+    var isAnimating = false;
+
+    function escapeHtml(text) {
+      var d = document.createElement('div');
+      d.appendChild(document.createTextNode(text));
+      return d.innerHTML;
+    }
+
+    function buildCard(emp, index) {
+      var fullName = emp.full_name || (emp.first_name + ' ' + emp.last_name);
+      var photoUrl = emp.photo_path ? STORAGE_BASE + emp.photo_path : '';
+      var roles = [];
+      if (emp.position) roles.push(emp.position);
+      if (emp.specialization) {
+        emp.specialization.split(',').forEach(function(s) {
+          var trimmed = s.trim();
+          if (trimmed) roles.push(trimmed);
+        });
+      }
+
+      var html = '<div class="card" data-index="' + index + '">';
+      html += '<div class="card-photo">';
+      if (photoUrl) {
+        html += '<img src="' + escapeHtml(photoUrl) + '" alt="' + escapeHtml(fullName) + '">';
+      } else {
+        html += '<div class="no-photo"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg></div>';
+      }
+      html += '</div>';
+
+      html += '<div class="card-content">';
+      html += '<div class="card-top">';
+      html += '<div class="card-name">' + escapeHtml(fullName).replace(/ /g, '<br>') + '</div>';
+      html += '<div class="card-divider"></div>';
+      html += '<div class="card-roles">';
+      roles.forEach(function(role) {
+        html += '<span>' + escapeHtml(role) + '</span>';
+      });
+      html += '</div></div>';
+
+      html += '<div class="card-stats">';
+      html += '<div class="stat"><div class="stat-value">' + emp.experience_years + '+ лет</div>';
+      html += '<div class="stat-bar"><div class="stat-bar-fill"></div></div>';
+      html += '<div class="stat-label">клинического опыта</div></div>';
+
+      html += '<div class="stat"><div class="stat-value">' + escapeHtml(emp.happy_patients || '0+') + '</div>';
+      html += '<div class="stat-bar"><div class="stat-bar-fill"></div></div>';
+      html += '<div class="stat-label">довольных пациентов</div></div>';
+
+      html += '<div class="stat"><div class="stat-value">' + emp.courses_count + '</div>';
+      html += '<div class="stat-bar"><div class="stat-bar-fill"></div></div>';
+      html += '<div class="stat-label">курсов повышения квалификации</div></div>';
+      html += '</div>';
+
+      html += '</div>';
+      html += '<div class="card-nav-hint">››</div>';
+      html += '</div>';
+      return html;
+    }
+
+    function renderCards() {
+      var html = '';
+      for (var i = 0; i < employees.length; i++) {
+        html += buildCard(employees[i], i);
+      }
+      container.innerHTML = html;
+
+      var cards = container.querySelectorAll('.card');
+      for (var i = 0; i < cards.length; i++) {
+        cards[i].addEventListener('click', function() {
+          var cardIndex = parseInt(this.getAttribute('data-index'));
+          if (cardIndex !== currentIndex) {
+            goToCard(cardIndex);
+          } else {
+            goToNext();
+          }
+        });
+      }
+
+      updateCardPositions();
+      recalcLayout();
+    }
+
+    function recalcLayout() {
+      var cards = container.querySelectorAll('.card');
+      if (!cards.length) return;
+      var w = window.innerWidth;
+      // Only override for mobile breakpoints where CSS clamp isn't enough
+      if (w <= 360) {
+        for (var i = 0; i < cards.length; i++) {
+          cards[i].style.width = '280px';
+          cards[i].style.minHeight = '500px';
+          var ph = cards[i].querySelector('.card-photo');
+          if (ph) ph.style.height = '280px';
+        }
+        container.style.minHeight = '520px';
+      } else if (w <= 420) {
+        for (var i = 0; i < cards.length; i++) {
+          cards[i].style.width = '310px';
+          cards[i].style.minHeight = '540px';
+          var ph = cards[i].querySelector('.card-photo');
+          if (ph) ph.style.height = '320px';
+        }
+        container.style.minHeight = '560px';
+      } else if (w <= 900) {
+        for (var i = 0; i < cards.length; i++) {
+          cards[i].style.width = '360px';
+          cards[i].style.minHeight = '600px';
+          var ph = cards[i].querySelector('.card-photo');
+          if (ph) ph.style.height = '380px';
+        }
+        container.style.minHeight = '620px';
+      } else {
+        // Desktop — let CSS clamp handle everything
+        for (var i = 0; i < cards.length; i++) {
+          cards[i].style.width = '';
+          cards[i].style.minHeight = '';
+          cards[i].style.marginLeft = '';
+          var ph = cards[i].querySelector('.card-photo');
+          if (ph) ph.style.height = '';
+        }
+        container.style.minHeight = '';
+      }
+    }
+
+    function updateCardPositions() {
+      var cards = container.querySelectorAll('.card');
+      for (var i = 0; i < cards.length; i++) {
+        cards[i].className = 'card';
+        var offset = (i - currentIndex + employees.length) % employees.length;
+        if (offset === 0) cards[i].classList.add('card-0');
+        else if (offset === 1) cards[i].classList.add('card-1');
+        else if (offset === 2) cards[i].classList.add('card-2');
+      }
+    }
+
+    function goToNext() {
+      if (isAnimating || employees.length <= 1) return;
+      isAnimating = true;
+      var cards = container.querySelectorAll('.card');
+      var currentCard = cards[currentIndex];
+      currentCard.classList.remove('card-0', 'card-1', 'card-2');
+      currentCard.classList.add('card-exit');
+      currentIndex = (currentIndex + 1) % employees.length;
+      setTimeout(function() {
+        updateCardPositions();
+        isAnimating = false;
+      }, 700);
+    }
+
+    function goToPrev() {
+      if (isAnimating || employees.length <= 1) return;
+      isAnimating = true;
+      var cards = container.querySelectorAll('.card');
+      var prevIndex = (currentIndex - 1 + employees.length) % employees.length;
+      var prevCard = cards[prevIndex];
+      prevCard.classList.remove('card-0', 'card-1', 'card-2');
+      prevCard.classList.add('card-enter');
+      currentIndex = prevIndex;
+      setTimeout(function() {
+        updateCardPositions();
+        isAnimating = false;
+      }, 700);
+    }
+
+    function goToCard(index) {
+      if (isAnimating || index === currentIndex) return;
+      isAnimating = true;
+      var cards = container.querySelectorAll('.card');
+      var targetOffset = (index - currentIndex + employees.length) % employees.length;
+      for (var i = 0; i < cards.length; i++) {
+        var cardOffset = (i - currentIndex + employees.length) % employees.length;
+        cards[i].classList.remove('card-0', 'card-1', 'card-2');
+        if (cardOffset < targetOffset) {
+          cards[i].classList.add('card-fly-left');
+        }
+      }
+      currentIndex = index;
+      setTimeout(function() {
+        updateCardPositions();
+        isAnimating = false;
+      }, 700);
+    }
+
+    // Touch
+    var touchStartX = 0;
+    container.addEventListener('touchstart', function(e) {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+    container.addEventListener('touchend', function(e) {
+      var diff = touchStartX - e.changedTouches[0].screenX;
+      if (Math.abs(diff) > 50) {
+        if (diff > 0) goToNext();
+        else goToPrev();
+      }
+    }, { passive: true });
+
+    // Keyboard
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowRight') goToNext();
+      if (e.key === 'ArrowLeft') goToPrev();
+    });
+
+    // Resize
+    var resizeTimer;
+    window.addEventListener('resize', function() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function() {
+        recalcLayout();
+        updateCardPositions();
+      }, 100);
+    });
+
+    // Fetch from Supabase
+    async function fetchEmployees() {
+      try {
+        var client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        var result = await client
+          .from('employees')
+          .select('*')
+          .eq('published', true)
+          .order('order_index', { ascending: true });
+
+        if (result.error) {
+          console.error('Supabase error:', result.error);
+          container.innerHTML = '<div class="loading-msg">Ошибка загрузки сотрудников</div>';
+          return;
+        }
+
+        employees = result.data || [];
+        if (employees.length === 0) {
+          container.innerHTML = '<div class="loading-msg">Сотрудники пока не добавлены</div>';
+          return;
+        }
+
+        renderCards();
+      } catch (err) {
+        console.error('Fetch error:', err);
+        container.innerHTML = '<div class="loading-msg">Ошибка загрузки</div>';
+      }
+    }
+
+    fetchEmployees();
+  })();
+  </script>
+</body>
+</html>
