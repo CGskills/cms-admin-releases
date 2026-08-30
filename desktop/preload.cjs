@@ -5,6 +5,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('electronAPI', {
   // Auto-update methods
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  downloadUpdate: () => ipcRenderer.invoke('download-update'),
   onUpdateAvailable: (callback) => {
     const subscription = (_event, info) => callback(info);
     ipcRenderer.on('update-available', subscription);

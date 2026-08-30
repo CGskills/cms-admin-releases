@@ -118,13 +118,41 @@ export default function UpdateChecker() {
     }
   };
 
-  const handleDownloadUpdate = () => {
-    if (!isElectron || status !== 'available') return;
+  const handleDownloadUpdate = async () => {
+    console.log('handleDownloadUpdate called', { isElectron, status });
 
-    // Trigger download by checking for updates again
-    // autoUpdater will automatically start downloading
-    const api = (window as any).electronAPI;
-    api.checkForUpdates();
+    if (!isElectron) {
+      console.log('Not in Electron, aborting');
+      return;
+    }
+
+    if (status !== 'available') {
+      console.log('Status is not available, current status:', status);
+      return;
+    }
+
+    console.log('Starting download...');
+    setStatus('downloading');
+    setDownloadProgress({ percent: 0, transferred: 0, total: 0, bytesPerSecond: 0 });
+
+    try {
+      const api = (window as any).electronAPI;
+      console.log('Calling api.downloadUpdate()...');
+      const result = await api.downloadUpdate();
+      console.log('Download result:', result);
+
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+    } catch (err) {
+      console.error('Download error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to download update');
+      setStatus('error');
+      setTimeout(() => {
+        setStatus('idle');
+        setError(null);
+      }, 5000);
+    }
   };
 
   const handleInstallUpdate = () => {

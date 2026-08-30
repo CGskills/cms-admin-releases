@@ -92,6 +92,18 @@ ipcMain.handle('check-for-updates', async () => {
   }
 });
 
+ipcMain.handle('download-update', async () => {
+  if (!app.isPackaged) {
+    return { error: 'Updates are only available in production builds' };
+  }
+  try {
+    await autoUpdater.downloadUpdate();
+    return { success: true };
+  } catch (error) {
+    return { error: error.message };
+  }
+});
+
 ipcMain.handle('install-update', () => {
   autoUpdater.quitAndInstall(false, true);
 });

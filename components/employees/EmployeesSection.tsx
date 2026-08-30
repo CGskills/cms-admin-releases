@@ -351,13 +351,14 @@ export default function EmployeesSection() {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
           gap: 40px;
-          align-items: start;
+          align-items: stretch;
         }
 
         .stat {
-          text-align: left;
+          text-align: center;
           display: flex;
           flex-direction: column;
+          align-items: center;
         }
 
         .stat-value {
@@ -365,7 +366,7 @@ export default function EmployeesSection() {
           font-weight: 800;
           color: #DB9844;
           margin-bottom: 8px;
-          text-align: left;
+          text-align: center;
           white-space: nowrap;
         }
 
@@ -389,7 +390,7 @@ export default function EmployeesSection() {
           font-size: 12px;
           color: rgba(255,255,255,0.85);
           line-height: 1.4;
-          text-align: left;
+          text-align: center;
           min-height: 51px;
         }
 
