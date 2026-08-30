@@ -134,6 +134,26 @@ function PricingTableContent({ items, settings }: PricingTableContentProps) {
     return `${price}${settings.currency}`;
   };
 
+  // Helper to parse features JSON
+  const parseFeatures = (item: PricingItem): { subtitle?: string; meta?: string } => {
+    try {
+      const features = item.features;
+      if (!features || features.length === 0) return {};
+
+      const firstFeature = features[0];
+      if (typeof firstFeature === 'string') {
+        const parsed = JSON.parse(firstFeature);
+        return {
+          subtitle: parsed.subtitle || parsed.subtitleTitle,
+          meta: parsed.meta
+        };
+      }
+    } catch (e) {
+      return {};
+    }
+    return {};
+  };
+
   const renderCellValue = (item: PricingItem, column: PricingColumn) => {
     const value = (item as Record<string, unknown>)[column.key] as string || '';
 
@@ -227,26 +247,62 @@ function PricingTableContent({ items, settings }: PricingTableContentProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {categoryItems.map((item, idx) => (
-                    <tr
-                      key={item.id}
-                      className={`${
-                        idx !== categoryItems.length - 1
-                          ? 'border-b border-slate-100 dark:border-slate-800'
-                          : ''
-                      } hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors`}
-                    >
-                      {visibleColumns.map((col) => (
-                        <td
-                          key={col.id}
-                          className="py-4 px-4"
-                          style={col.width ? { width: `${col.width}px` } : undefined}
+                  {categoryItems.map((item, idx) => {
+                    const itemMeta = parseFeatures(item);
+                    return (
+                      <>
+                        <tr
+                          key={item.id}
+                          className={`${
+                            idx !== categoryItems.length - 1
+                              ? 'border-b border-slate-100 dark:border-slate-800'
+                              : ''
+                          } hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors`}
                         >
-                          {renderCellValue(item, col)}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
+                          {visibleColumns.map((col) => (
+                            <td
+                              key={col.id}
+                              className="py-4 px-4"
+                              style={col.width ? { width: `${col.width}px` } : undefined}
+                            >
+                              {renderCellValue(item, col)}
+                            </td>
+                          ))}
+                        </tr>
+                        {/* Meta row */}
+                        {(itemMeta.subtitle || item.description || itemMeta.meta) && (
+                          <tr
+                            key={`${item.id}-meta`}
+                            className={`${
+                              idx !== categoryItems.length - 1
+                                ? 'border-b border-slate-100 dark:border-slate-800'
+                                : ''
+                            }`}
+                          >
+                            <td colSpan={visibleColumns.length} className="py-3 px-4 bg-slate-50 dark:bg-slate-800/30">
+                              <div className="space-y-1 text-sm">
+                                {itemMeta.subtitle && (
+                                  <div className="text-slate-600 dark:text-slate-400 font-medium">
+                                    {itemMeta.subtitle}
+                                  </div>
+                                )}
+                                {item.description && (
+                                  <div className="text-slate-500 dark:text-slate-500">
+                                    {item.description}
+                                  </div>
+                                )}
+                                {itemMeta.meta && (
+                                  <div className="text-slate-500 dark:text-slate-500">
+                                    {itemMeta.meta}
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
