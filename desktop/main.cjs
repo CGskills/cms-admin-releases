@@ -22,9 +22,9 @@ let isQuitting = false;
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = true;
 
-// Configure update logger
-if (!app.isPackaged) {
-  autoUpdater.logger = console;
+// Configure update logger - enable in production too for debugging
+autoUpdater.logger = console;
+if (autoUpdater.logger) {
   autoUpdater.logger.transports = {
     file: { level: 'info' }
   };
@@ -72,6 +72,7 @@ autoUpdater.on('update-downloaded', (info) => {
 });
 
 autoUpdater.on('error', (error) => {
+  console.error('[Main] Auto-updater error:', error);
   if (mainWindow) {
     mainWindow.webContents.send('update-error', {
       message: error.message,
@@ -97,9 +98,12 @@ ipcMain.handle('download-update', async () => {
     return { error: 'Updates are only available in production builds' };
   }
   try {
-    await autoUpdater.downloadUpdate();
+    console.log('[Main] Starting update download...');
+    const result = await autoUpdater.downloadUpdate();
+    console.log('[Main] Download initiated successfully:', result);
     return { success: true };
   } catch (error) {
+    console.error('[Main] Download error:', error);
     return { error: error.message };
   }
 });
@@ -362,7 +366,7 @@ function createMainWindow() {
       // preload bridge. Keep Chromium's renderer sandbox enabled so a page
       // compromise cannot escape into the local desktop process.
       sandbox: true,
-      devTools: true, // TEMPORARY: Always enable DevTools for diagnostic
+      devTools: !app.isPackaged || process.env.ENABLE_DEVTOOLS === '1',
     },
   });
 
@@ -380,8 +384,10 @@ function createMainWindow() {
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
-    // TEMPORARY: Auto-open DevTools for diagnostic
-    mainWindow.webContents.openDevTools();
+    // Only open DevTools in development or when explicitly enabled
+    if (!app.isPackaged || process.env.ENABLE_DEVTOOLS === '1') {
+      mainWindow.webContents.openDevTools();
+    }
   });
 
   mainWindow.on('closed', () => {

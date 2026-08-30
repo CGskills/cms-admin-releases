@@ -2,6 +2,7 @@
 
 import { requireAdminServerContext } from '@/lib/auth/server';
 import type { AuthenticatedServerContext } from '@/lib/auth/server';
+import { validateCSRF } from '@/lib/auth/csrf';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import {
@@ -109,6 +110,7 @@ export async function deleteTestimonialImageAction(path: string): Promise<void> 
 }
 
 export async function createTestimonial(formData: FormData) {
+  await validateCSRF();
   const { supabase } = await requireAdminServerContext();
   const uploadedPaths = getUploadedPaths(formData);
   let committed = false;
@@ -177,11 +179,12 @@ export async function createTestimonial(formData: FormData) {
 }
 
 export async function updateTestimonial(id: string, formData: FormData) {
+  await validateCSRF();
+  assertUuid(id);
   const uploadedPaths = getUploadedPaths(formData);
   const { supabase } = await requireAdminServerContext();
   let committed = false;
   try {
-    assertUuid(id);
 
   const name = requireFormText(formData, 'name', 120);
   const surname = getFormText(formData, 'surname', 120);
@@ -255,6 +258,7 @@ export async function updateTestimonial(id: string, formData: FormData) {
 }
 
 export async function deleteTestimonial(id: string) {
+  await validateCSRF();
   assertUuid(id);
   const { supabase } = await requireAdminServerContext();
 
@@ -293,6 +297,7 @@ export async function deleteTestimonial(id: string) {
 }
 
 export async function togglePublished(id: string, published: boolean) {
+  await validateCSRF();
   assertUuid(id);
   const { supabase } = await requireAdminServerContext();
 
@@ -314,6 +319,7 @@ export async function togglePublished(id: string, published: boolean) {
 }
 
 export async function reorderTestimonials(ids: string[]) {
+  await validateCSRF();
   assertUuidList(ids);
   const { supabase } = await requireAdminServerContext();
 

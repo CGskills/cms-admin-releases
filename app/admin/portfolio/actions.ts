@@ -1,6 +1,7 @@
 'use server';
 
 import { requireAdminServerContext } from '@/lib/auth/server';
+import { validateCSRF } from '@/lib/auth/csrf';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { logActivity } from '@/lib/activity/log';
@@ -137,6 +138,7 @@ async function generateUniqueSlug(
 }
 
 export async function createPortfolio(formData: FormData) {
+  await validateCSRF();
   const { supabase } = await requireAdminServerContext();
   const uploadedPaths = getUploadedPaths(formData);
   let committed = false;
@@ -231,11 +233,12 @@ export async function createPortfolio(formData: FormData) {
 }
 
 export async function updatePortfolio(id: string, formData: FormData) {
+  await validateCSRF();
+  assertUuid(id);
   const uploadedPaths = getUploadedPaths(formData);
   const { supabase } = await requireAdminServerContext();
   let committed = false;
   try {
-  assertUuid(id);
 
   const { data: existing, error: existingError } = await supabase
     .from('portfolio_items')
@@ -340,6 +343,7 @@ export async function updatePortfolio(id: string, formData: FormData) {
 }
 
 export async function deletePortfolio(id: string) {
+  await validateCSRF();
   assertUuid(id);
   const { supabase } = await requireAdminServerContext();
 
@@ -379,6 +383,7 @@ export const deletePortfolioItem = deletePortfolio;
 export async function updatePortfolioOrder(
   items: { id: string; order_index: number }[]
 ) {
+  await validateCSRF();
   assertOrderedItems(items);
   const { supabase } = await requireAdminServerContext();
 

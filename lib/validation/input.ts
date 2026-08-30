@@ -1,4 +1,6 @@
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const SEMVER_PATTERN = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
+const NPM_NAME_PATTERN = /^(@[a-z0-9-~][a-z0-9-._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/;
 
 export function getFormText(formData: FormData, field: string, maxLength = 10_000): string {
   const value = formData.get(field);
@@ -57,12 +59,39 @@ export function assertUuidList(ids: string[]): void {
 }
 
 export function assertSafeUrl(value: string, field = 'url'): void {
-  if (!value) return;
+  if (!value?.trim()) {
+    return; // Empty URLs are allowed (optional fields)
+  }
+
+  let parsed: URL;
   try {
-    const parsed = new URL(value);
-    if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('invalid');
+    parsed = new URL(value.trim());
   } catch {
     throw new Error(`Invalid ${field}`);
+  }
+
+  // Только HTTP/HTTPS
+  if (!['http:', 'https:'].includes(parsed.protocol)) {
+    throw new Error(`Invalid ${field} protocol`);
+  }
+
+  // Блокируем @ в hostname (phishing protection)
+  if (parsed.hostname.includes('@')) {
+    throw new Error(`Invalid ${field} hostname`);
+  }
+
+  // Блокируем IP адреса (SSRF protection)
+  const ipv4Pattern = /^(\d{1,3}\.){3}\d{1,3}$/;
+  const ipv6Pattern = /^([0-9a-f]{0,4}:){2,7}[0-9a-f]{0,4}$/i;
+  if (ipv4Pattern.test(parsed.hostname) || ipv6Pattern.test(parsed.hostname)) {
+    throw new Error(`IP addresses not allowed in ${field}`);
+  }
+
+  // Блокируем localhost и internal hosts (SSRF protection)
+  const blockedHosts = ['localhost', '127.0.0.1', '0.0.0.0', '::1', '169.254.169.254'];
+  const hostname = parsed.hostname.toLowerCase();
+  if (blockedHosts.some(blocked => hostname === blocked || hostname.includes(blocked))) {
+    throw new Error(`Invalid ${field} hostname`);
   }
 }
 
@@ -89,4 +118,47 @@ export function getBoundedNumber(value: string, fallback: number, minimum: numbe
 
 export function isPlainRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Validate npm package name according to npm naming rules.
+ * Blocks path traversal attempts and invalid package names.
+ */
+export function assertNpmPackageName(name: string): void {
+  if (!name || typeof name !== 'string') {
+    throw new Error('Invalid package name');
+  }
+
+  const trimmed = name.trim();
+
+  // Check length (npm limit is 214 characters)
+  if (trimmed.length === 0 || trimmed.length > 214) {
+    throw new Error('Invalid package name length');
+  }
+
+  // Check against npm naming pattern
+  if (!NPM_NAME_PATTERN.test(trimmed)) {
+    throw new Error('Invalid package name format');
+  }
+
+  // Explicitly block common attack patterns
+  if (trimmed.includes('..') || trimmed.includes('/') && !trimmed.startsWith('@')) {
+    throw new Error('Invalid package name');
+  }
+}
+
+/**
+ * Validate semantic version string (semver).
+ * Ensures version follows the semver specification.
+ */
+export function assertSemver(version: string): void {
+  if (!version || typeof version !== 'string') {
+    throw new Error('Invalid version');
+  }
+
+  const trimmed = version.trim();
+
+  if (!SEMVER_PATTERN.test(trimmed)) {
+    throw new Error('Invalid semver version');
+  }
 }

@@ -1,6 +1,7 @@
 'use server';
 
 import { requireAdminServerContext } from '@/lib/auth/server';
+import { validateCSRF } from '@/lib/auth/csrf';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { assertUuid, getFormText, requireFormText } from '@/lib/validation/input';
@@ -16,6 +17,7 @@ function slugify(text: string): string {
 }
 
 export async function createPage(formData: FormData) {
+  await validateCSRF();
   const { supabase } = await requireAdminServerContext();
 
   const title = requireFormText(formData, 'title', 240);
@@ -49,6 +51,7 @@ export async function createPage(formData: FormData) {
 }
 
 export async function updatePage(id: string, formData: FormData) {
+  await validateCSRF();
   assertUuid(id);
   const { supabase } = await requireAdminServerContext();
 
@@ -86,6 +89,7 @@ export async function updatePage(id: string, formData: FormData) {
 }
 
 export async function deletePage(id: string) {
+  await validateCSRF();
   assertUuid(id);
   const { supabase } = await requireAdminServerContext();
 

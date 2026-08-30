@@ -1,6 +1,7 @@
 'use server';
 
 import { listAdminStorageFiles, deleteAdminImage, uploadAdminImage } from '@/lib/storage/server';
+import { validateCSRF } from '@/lib/auth/csrf';
 import { revalidatePath } from 'next/cache';
 
 const ALLOWED_BUCKETS = new Set(['portfolio', 'employees', 'services', 'avatars', 'logos', 'testimonials']);
@@ -28,6 +29,7 @@ function assertBucket(bucket: string): void {
 }
 
 export async function uploadMedia(bucket: string, file: File): Promise<MediaUploadResult> {
+  await validateCSRF();
   assertBucket(bucket);
   if (!file || typeof file.name !== 'string' || typeof file.arrayBuffer !== 'function' || file.size <= 0 || file.size > MAX_FILE_SIZE || !ALLOWED_MIME_TYPES.has(file.type)) {
     throw new Error('Unsupported or oversized file');
@@ -59,6 +61,7 @@ export async function uploadMedia(bucket: string, file: File): Promise<MediaUplo
 }
 
 export async function deleteMedia(bucket: string, path: string) {
+  await validateCSRF();
   assertBucket(bucket);
   await deleteAdminImage(bucket, path);
 

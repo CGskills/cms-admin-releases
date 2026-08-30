@@ -119,37 +119,44 @@ export default function UpdateChecker() {
   };
 
   const handleDownloadUpdate = async () => {
-    console.log('handleDownloadUpdate called', { isElectron, status });
+    console.log('[UpdateChecker] handleDownloadUpdate called', { isElectron, status });
 
     if (!isElectron) {
-      console.log('Not in Electron, aborting');
+      console.log('[UpdateChecker] Not in Electron, aborting');
       return;
     }
 
     if (status !== 'available') {
-      console.log('Status is not available, current status:', status);
+      console.log('[UpdateChecker] Status is not available, current status:', status);
       return;
     }
 
-    console.log('Starting download...');
+    console.log('[UpdateChecker] Starting download...');
     setStatus('downloading');
     setDownloadProgress({ percent: 0, transferred: 0, total: 0, bytesPerSecond: 0 });
+    setError(null);
 
     try {
       const api = (window as any).electronAPI;
-      console.log('Calling api.downloadUpdate()...');
+      console.log('[UpdateChecker] Calling api.downloadUpdate()...');
       const result = await api.downloadUpdate();
-      console.log('Download result:', result);
+      console.log('[UpdateChecker] Download result:', result);
 
       if (result?.error) {
+        console.error('[UpdateChecker] Download returned error:', result.error);
         throw new Error(result.error);
       }
+
+      console.log('[UpdateChecker] Download initiated successfully');
+      // Don't change status here - wait for 'update-downloading' events
     } catch (err) {
-      console.error('Download error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to download update');
+      console.error('[UpdateChecker] Download error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to download update';
+      setError(errorMessage);
       setStatus('error');
+      setDownloadProgress(null);
       setTimeout(() => {
-        setStatus('idle');
+        setStatus('available'); // Return to available state so user can retry
         setError(null);
       }, 5000);
     }

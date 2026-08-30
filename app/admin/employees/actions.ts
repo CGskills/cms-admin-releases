@@ -2,6 +2,7 @@
 
 import { requireAdminServerContext } from '@/lib/auth/server';
 import type { AuthenticatedServerContext } from '@/lib/auth/server';
+import { validateCSRF } from '@/lib/auth/csrf';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import {
@@ -104,6 +105,7 @@ export async function deleteEmployeePhotoAction(path: string): Promise<void> {
 }
 
 export async function createEmployee(formData: FormData) {
+  await validateCSRF();
   const { supabase } = await requireAdminServerContext();
   const uploadedPaths = getUploadedPaths(formData);
 
@@ -179,11 +181,12 @@ export async function createEmployee(formData: FormData) {
 }
 
 export async function updateEmployee(id: string, formData: FormData) {
+  await validateCSRF();
+  assertUuid(id);
   const uploadedPaths = getUploadedPaths(formData);
   const { supabase } = await requireAdminServerContext();
   let committed = false;
   try {
-    assertUuid(id);
 
   const first_name = requireFormText(formData, 'first_name', 120);
   const last_name = getFormText(formData, 'last_name', 120);
@@ -257,6 +260,7 @@ export async function updateEmployee(id: string, formData: FormData) {
 }
 
 export async function deleteEmployee(id: string) {
+  await validateCSRF();
   assertUuid(id);
   const { supabase } = await requireAdminServerContext();
 
@@ -290,6 +294,7 @@ export async function deleteEmployee(id: string) {
 }
 
 export async function togglePublished(id: string, published: boolean) {
+  await validateCSRF();
   assertUuid(id);
   const { supabase } = await requireAdminServerContext();
 
@@ -310,6 +315,7 @@ export async function togglePublished(id: string, published: boolean) {
 }
 
 export async function reorderEmployees(ids: string[]) {
+  await validateCSRF();
   assertUuidList(ids);
   const { supabase } = await requireAdminServerContext();
 

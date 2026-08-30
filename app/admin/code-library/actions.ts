@@ -1,6 +1,7 @@
 'use server';
 
 import { requireAdminServerContext } from '@/lib/auth/server';
+import { validateCSRF } from '@/lib/auth/csrf';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { logActivity } from '@/lib/activity/log';
@@ -10,7 +11,7 @@ import type {
   CodeBlockDependency,
   ValidationStatus,
 } from '@/types/code-blocks';
-import { assertSafeUrl, assertUuid, getFormText, isPlainRecord } from '@/lib/validation/input';
+import { assertSafeUrl, assertUuid, getFormText, isPlainRecord, assertNpmPackageName, assertSemver } from '@/lib/validation/input';
 
 const CODE_BLOCK_CATEGORIES = new Set<CodeBlockCategory>([
   'hero', 'gallery', 'slider', 'before_after', 'interactive', 'team', 'reviews',
@@ -50,10 +51,18 @@ function parseDependencies(value: FormDataEntryValue | null): CodeBlockDependenc
     const name = entry.name.trim();
     if (!name || name.length > 200) throw new Error('Invalid dependency name');
 
+    // Validate npm package name format
+    assertNpmPackageName(name);
+
     let version: string | undefined;
     if (entry.version !== undefined && entry.version !== null) {
       if (typeof entry.version !== 'string' || entry.version.length > 100) throw new Error('Invalid dependency version');
       version = entry.version.trim() || undefined;
+
+      // Validate semver format if version is provided
+      if (version) {
+        assertSemver(version);
+      }
     }
 
     let cdnUrl: string | undefined;
@@ -75,6 +84,7 @@ function bumpVersion(current: string): string {
 }
 
 export async function createCodeBlock(formData: FormData) {
+  await validateCSRF();
   const { supabase } = await requireAdminServerContext();
 
   const name = getFormText(formData, 'name', 240) || 'Untitled';
@@ -119,6 +129,7 @@ export async function createCodeBlock(formData: FormData) {
 }
 
 export async function updateCodeBlock(id: string, formData: FormData) {
+  await validateCSRF();
   assertUuid(id);
   const { supabase } = await requireAdminServerContext();
 
@@ -181,6 +192,7 @@ export async function updateCodeBlock(id: string, formData: FormData) {
 }
 
 export async function deleteCodeBlock(id: string) {
+  await validateCSRF();
   assertUuid(id);
   const { supabase } = await requireAdminServerContext();
 
@@ -217,6 +229,7 @@ export async function deleteCodeBlock(id: string) {
 }
 
 export async function duplicateCodeBlock(id: string) {
+  await validateCSRF();
   assertUuid(id);
   const { supabase } = await requireAdminServerContext();
 
@@ -254,6 +267,7 @@ export async function duplicateCodeBlock(id: string) {
 }
 
 export async function updateCodeBlockStatus(id: string, status: CodeBlockStatus) {
+  await validateCSRF();
   assertUuid(id);
   if (!CODE_BLOCK_STATUSES.has(status)) throw new Error('Invalid status');
   const { supabase } = await requireAdminServerContext();
@@ -278,6 +292,7 @@ export async function updateValidationStatus(
   field: 'responsive_status' | 'validation_status',
   value: string
 ) {
+  await validateCSRF();
   assertUuid(id);
   if (field !== 'responsive_status' && field !== 'validation_status') {
     throw new Error('Invalid validation field');

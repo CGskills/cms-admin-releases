@@ -1,10 +1,12 @@
 'use server';
 
 import { requireAdminServerContext } from '@/lib/auth/server';
+import { validateCSRF } from '@/lib/auth/csrf';
 import { revalidatePath } from 'next/cache';
 import { getFormText, isPlainRecord, requireFormText } from '@/lib/validation/input';
 
 export async function updateSettings(formData: FormData) {
+  await validateCSRF();
   const { supabase } = await requireAdminServerContext();
 
   const site_name = requireFormText(formData, 'site_name', 240);

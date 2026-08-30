@@ -1,6 +1,7 @@
 'use server';
 
 import { requireAdminServerContext } from '@/lib/auth/server';
+import { validateCSRF } from '@/lib/auth/csrf';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import type { PricingSettings } from '@/types/pricing';
@@ -38,6 +39,7 @@ async function persistPricingOrder(
 // ─── CRUD ───────────────────────────────────────
 
 export async function createPricing(formData: FormData) {
+  await validateCSRF();
   const { supabase } = await requireAdminServerContext();
 
   const category = requireFormText(formData, 'category', 120);
@@ -81,6 +83,7 @@ export async function createPricing(formData: FormData) {
 }
 
 export async function updatePricing(id: string, formData: FormData) {
+  await validateCSRF();
   assertUuid(id);
   const { supabase } = await requireAdminServerContext();
 
@@ -110,6 +113,7 @@ export async function updatePricing(id: string, formData: FormData) {
 }
 
 export async function deletePricing(id: string) {
+  await validateCSRF();
   assertUuid(id);
   const { supabase } = await requireAdminServerContext();
   const { data: item, error: fetchError } = await supabase
@@ -130,6 +134,7 @@ export async function deletePricing(id: string) {
 }
 
 export async function updatePricingOrder(items: { id: string; order_index: number }[]) {
+  await validateCSRF();
   assertOrderedItems(items);
   const { supabase } = await requireAdminServerContext();
   await persistPricingOrder(items, async ({ id, order_index }) =>
@@ -139,6 +144,7 @@ export async function updatePricingOrder(items: { id: string; order_index: numbe
 }
 
 export async function togglePricingVisibility(id: string, visible: boolean) {
+  await validateCSRF();
   assertUuid(id);
   const { supabase } = await requireAdminServerContext();
   const { data: item } = await supabase.from('pricing').select('name').eq('id', id).single();
@@ -157,6 +163,7 @@ export async function quickUpdatePricing(
   field: string,
   value: string
 ) {
+  await validateCSRF();
   assertUuid(id);
   const { supabase } = await requireAdminServerContext();
   const allowedFields = new Set(['category', 'name', 'description', 'price', 'duration']);
@@ -239,6 +246,7 @@ export async function getPricingSettings(): Promise<PricingSettings> {
 }
 
 export async function savePricingSettings(settings: PricingSettings) {
+  await validateCSRF();
   const { supabase } = await requireAdminServerContext();
 
   const { data: existing } = await supabase
@@ -268,6 +276,7 @@ export async function savePricingSettings(settings: PricingSettings) {
 // ─── Category Management ───────────────────────
 
 export async function renameCategory(oldName: string, newName: string) {
+  await validateCSRF();
   const { supabase } = await requireAdminServerContext();
   if (!oldName.trim() || !newName.trim() || oldName.length > 120 || newName.length > 120) {
     throw new Error('Invalid category name');
@@ -286,6 +295,7 @@ export async function renameCategory(oldName: string, newName: string) {
 }
 
 export async function mergeCategories(fromCategory: string, toCategory: string) {
+  await validateCSRF();
   const { supabase } = await requireAdminServerContext();
   if (!fromCategory.trim() || !toCategory.trim() || fromCategory.length > 120 || toCategory.length > 120) {
     throw new Error('Invalid category name');
@@ -304,6 +314,7 @@ export async function mergeCategories(fromCategory: string, toCategory: string) 
 }
 
 export async function deleteCategory(categoryName: string) {
+  await validateCSRF();
   const { supabase } = await requireAdminServerContext();
   if (!categoryName.trim() || categoryName.length > 120) throw new Error('Invalid category name');
 
@@ -321,6 +332,7 @@ export async function deleteCategory(categoryName: string) {
 // ─── Subsection Management ─────────────────────
 
 export async function renameSubsection(category: string, oldName: string, newName: string) {
+  await validateCSRF();
   const { supabase } = await requireAdminServerContext();
   if (!category.trim() || !newName.trim() || category.length > 120 || oldName.length > 120 || newName.length > 120) {
     throw new Error('Invalid subsection name');
@@ -338,6 +350,7 @@ export async function renameSubsection(category: string, oldName: string, newNam
 }
 
 export async function deleteSubsection(category: string, subsectionName: string) {
+  await validateCSRF();
   const { supabase } = await requireAdminServerContext();
   if (!category.trim() || category.length > 120 || subsectionName.length > 120) {
     throw new Error('Invalid subsection name');
@@ -358,6 +371,7 @@ export async function deleteSubsection(category: string, subsectionName: string)
 // ─── Direct Create (for tree editor) ─────────────
 
 export async function createPricingDirect(formData: FormData) {
+  await validateCSRF();
   const { supabase } = await requireAdminServerContext();
 
   const category = requireFormText(formData, 'category', 120);
@@ -502,6 +516,7 @@ export async function getPricingEditorItems(): Promise<PricingEditorItem[]> {
  * fresh list with getPricingEditorItems().
  */
 export async function mutatePricingEditor(input: PricingEditorMutation): Promise<void> {
+  await validateCSRF();
   const { supabase } = await requireAdminServerContext();
 
   if (!isPlainRecord(input) || typeof input.kind !== 'string') {
