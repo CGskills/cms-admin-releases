@@ -351,7 +351,7 @@ export default function EmployeesSection() {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
           gap: 40px;
-          align-items: end;
+          align-items: start;
         }
 
         .stat {
@@ -391,8 +391,6 @@ export default function EmployeesSection() {
           line-height: 1.4;
           text-align: left;
           min-height: 51px;
-          display: flex;
-          align-items: flex-end;
         }
 
         .card-nav-hint {
@@ -497,9 +495,6 @@ export default function EmployeesSection() {
             font-size: 11px;
             text-align: center;
             min-height: 38px;
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
           }
 
           .card-1 {
@@ -570,9 +565,7 @@ export default function EmployeesSection() {
           .stat-label {
             font-size: 10px;
             min-height: 34px;
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
+            text-align: center;
           }
 
           .card-1 {
