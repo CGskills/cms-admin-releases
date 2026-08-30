@@ -1,6 +1,6 @@
 {
   "name": "admin",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "CMS Admin Panel desktop application",
   "private": true,
   "main": "desktop/main.cjs",
@@ -59,10 +59,7 @@
     ],
     "files": [
       "desktop/**/*",
-      ".next/standalone/**/*",
-      "!node_modules/**/*",
-      "node_modules/electron-updater/**/*",
-      "node_modules/fs-extra/**/*"
+      ".next/standalone/**/*"
     ],
     "directories": {
       "output": "release"
