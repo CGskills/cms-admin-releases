@@ -51,7 +51,7 @@
   },
   "build": {
     "appId": "com.cms.admin",
-    "productName": "CMS Admin Panel",
+    "productName": "CMSAdminPanel",
     "artifactName": "CMS-Admin-${version}-${os}-${arch}.${ext}",
     "asar": true,
     "asarUnpack": [
@@ -80,6 +80,7 @@
         }
       ],
       "icon": "public/logo.svg",
+      "executableName": "CMSAdminPanel",
       "publish": [
         "github"
       ]

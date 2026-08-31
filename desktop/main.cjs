@@ -22,13 +22,20 @@ let isQuitting = false;
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = true;
 
-// Configure update logger - enable in production too for debugging
-autoUpdater.logger = console;
-if (autoUpdater.logger) {
-  autoUpdater.logger.transports = {
-    file: { level: 'info' }
-  };
-}
+// Configure update logger with better error handling
+const setupUpdateLogger = () => {
+  try {
+    const log = require('electron-log');
+    log.transports.file.level = 'info';
+    autoUpdater.logger = log;
+    log.info('[AutoUpdater] Logger initialized');
+  } catch (error) {
+    console.log('[AutoUpdater] Using console logger (electron-log not available)');
+    autoUpdater.logger = console;
+  }
+};
+
+setupUpdateLogger();
 
 // Auto-updater event handlers
 autoUpdater.on('checking-for-update', () => {
@@ -72,10 +79,21 @@ autoUpdater.on('update-downloaded', (info) => {
 });
 
 autoUpdater.on('error', (error) => {
-  console.error('[Main] Auto-updater error:', error);
+  const errorMessage = error.message || String(error);
+  const errorStack = error.stack || '';
+
+  console.error('[Main] Auto-updater error:', errorMessage);
+  console.error('[Main] Error stack:', errorStack);
+
+  // Log additional context
+  console.error('[Main] App version:', app.getVersion());
+  console.error('[Main] Is packaged:', app.isPackaged);
+  console.error('[Main] Platform:', process.platform);
+  console.error('[Main] App path:', app.getAppPath());
+
   if (mainWindow) {
     mainWindow.webContents.send('update-error', {
-      message: error.message,
+      message: errorMessage,
     });
   }
 });
@@ -83,13 +101,23 @@ autoUpdater.on('error', (error) => {
 // IPC handlers for auto-update
 ipcMain.handle('check-for-updates', async () => {
   if (!app.isPackaged) {
+    console.log('[Main] Updates only available in production builds');
     return { error: 'Updates are only available in production builds' };
   }
   try {
+    console.log('[Main] Checking for updates...');
+    console.log('[Main] App version:', app.getVersion());
+    console.log('[Main] App path:', app.getAppPath());
+
     const result = await autoUpdater.checkForUpdates();
+    console.log('[Main] Check result:', result ? 'Update info received' : 'No result');
+
     return { success: true, updateInfo: result?.updateInfo };
   } catch (error) {
-    return { error: error.message };
+    const errorMessage = error.message || String(error);
+    console.error('[Main] Check for updates failed:', errorMessage);
+    console.error('[Main] Error details:', error);
+    return { error: errorMessage };
   }
 });
 
@@ -103,12 +131,15 @@ ipcMain.handle('download-update', async () => {
     console.log('[Main] Download initiated successfully:', result);
     return { success: true };
   } catch (error) {
-    console.error('[Main] Download error:', error);
-    return { error: error.message };
+    const errorMessage = error.message || String(error);
+    console.error('[Main] Download error:', errorMessage);
+    console.error('[Main] Error details:', error);
+    return { error: errorMessage };
   }
 });
 
 ipcMain.handle('install-update', () => {
+  console.log('[Main] Installing update and restarting...');
   autoUpdater.quitAndInstall(false, true);
 });
 
@@ -404,11 +435,16 @@ async function boot() {
 
   // Check for updates after app is ready (only in production)
   if (app.isPackaged) {
+    console.log('[Main] Scheduling auto-update check...');
     setTimeout(() => {
+      console.log('[Main] Starting automatic update check...');
       autoUpdater.checkForUpdates().catch((error) => {
-        console.error('Auto-update check failed:', error);
+        console.error('[Main] Auto-update check failed:', error.message || error);
+        console.error('[Main] Error details:', error);
       });
     }, 3000); // Delay to let the app fully load first
+  } else {
+    console.log('[Main] Auto-update disabled in development mode');
   }
 }
 
