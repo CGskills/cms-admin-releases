@@ -68,7 +68,7 @@
     "publish": {
       "provider": "github",
       "owner": "CGskills",
-      "repo": "cms-admin",
+      "repo": "cms-admin-releases",
       "releaseType": "release"
     },
     "win": {
