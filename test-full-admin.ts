@@ -6,12 +6,16 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = 'https://pjujhrfkykxgzcexyyti.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_UZtIlbYBisAt6BIWSkiMqg_y09ZDEdw';
-const SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBqdWpocmZreWt4Z3pjZXh5eXRpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjY1NjExNywiZXhwIjoyMTAyMjMyMTE3fQ.HwpQuze5kwc2sDUZnvfWeiYuv5v7tI2RTFVy9l2xeXs';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_KEY) {
+  throw new Error(
+    'Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY before running this test.',
+  );
+}
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_KEY);
 
 interface TestResult {
   section: string;
@@ -34,7 +38,9 @@ async function testSection(name: string, tableName: string, displayField: string
       return false;
     }
 
-    const sampleItem = data && data.length > 0 ? (data[0] as any)[displayField] : 'N/A';
+    const sampleItem = data && data.length > 0
+      ? (data[0] as Record<string, unknown>)[displayField]
+      : 'N/A';
     results.push({ section: name, passed: true, count: count || 0 });
 
     console.log(`✅ ${name}: ${count} records loaded`);

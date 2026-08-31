@@ -1,6 +1,7 @@
 import { requireAdminServerContext } from '@/lib/auth/server';
 import type { User } from '@supabase/supabase-js';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import Sidebar from './_components/Sidebar';
 import Header from './_components/Header';
 
@@ -9,6 +10,13 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const requestHeaders = await headers();
+  // middleware marks the login request so this shared parent layout does not
+  // redirect the login page back to itself.
+  if (requestHeaders.get('x-is-login-route') === '1') {
+    return <>{children}</>;
+  }
+
   let user: User;
   try {
     ({ user } = await requireAdminServerContext());

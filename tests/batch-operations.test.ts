@@ -6,7 +6,10 @@ vi.mock('server-only', () => ({}));
 import { batchUpdateOrder, legacyBatchUpdateOrder } from '@/lib/database/batch-operations';
 
 describe('Batch Operations', () => {
-  let mockSupabase: any;
+  let mockSupabase: {
+    rpc: ReturnType<typeof vi.fn>;
+    from: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     // Mock Supabase client

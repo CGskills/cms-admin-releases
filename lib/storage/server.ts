@@ -122,28 +122,52 @@ export async function uploadAdminImage({
   file: File;
   oldPath?: string | null;
 }): Promise<{ path: string; url: string }> {
-  assertBucket(bucket);
-  await validateUpload(file);
+  try {
+    assertBucket(bucket);
+    await validateUpload(file);
 
-  const { supabase } = await requireAdminServerContext();
-  const path = makePath(folder || '', file);
-  const storage = supabase.storage.from(bucket);
+    const { supabase } = await requireAdminServerContext();
+    const path = makePath(folder || '', file);
+    const storage = supabase.storage.from(bucket);
 
-  const { data, error } = await storage.upload(path, file, {
-    cacheControl: '3600',
-    upsert: false,
-    contentType: file.type,
-  });
+    const { data, error } = await storage.upload(path, file, {
+      cacheControl: '3600',
+      upsert: false,
+      contentType: file.type,
+    });
 
-  if (error || !data?.path) {
-    throw new Error(error?.message || 'Failed to upload image');
+    if (error) {
+      console.error('[Storage] Upload error:', {
+        bucket,
+        path,
+        error: error.message,
+        fileSize: file.size,
+        fileType: file.type,
+      });
+      throw new Error(error.message || 'Failed to upload image');
+    }
+
+    if (!data?.path) {
+      console.error('[Storage] No path returned:', { bucket, expectedPath: path });
+      throw new Error('Failed to upload image');
+    }
+
+    // `oldPath` is intentionally not touched here; see the function comment.
+    void oldPath;
+
+    const { data: urlData } = storage.getPublicUrl(data.path);
+
+    console.log('[Storage] Upload success:', {
+      bucket,
+      path: data.path,
+      url: urlData.publicUrl,
+    });
+
+    return { path: data.path, url: urlData.publicUrl };
+  } catch (error) {
+    console.error('[Storage] Upload failed:', error);
+    throw error;
   }
-
-  // `oldPath` is intentionally not touched here; see the function comment.
-  void oldPath;
-
-  const { data: urlData } = storage.getPublicUrl(data.path);
-  return { path: data.path, url: urlData.publicUrl };
 }
 
 /** Delete one image through the authenticated server Supabase client. */

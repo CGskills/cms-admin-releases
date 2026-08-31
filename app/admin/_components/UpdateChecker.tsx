@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 
 interface UpdateInfo {
   version: string;
@@ -47,7 +47,14 @@ export default function UpdateChecker() {
   const [downloadProgress, setDownloadProgress] = useState<DownloadProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [currentVersion, setCurrentVersion] = useState<string>('');
-  const [isElectron] = useState(() => typeof window !== 'undefined' && 'electronAPI' in window);
+  // The server snapshot is always false; React switches to the Electron
+  // preload bridge only after hydration, keeping SSR and the first client
+  // render identical.
+  const isElectron = useSyncExternalStore(
+    () => () => undefined,
+    () => typeof window !== 'undefined' && Boolean(window.electronAPI),
+    () => false,
+  );
 
   useEffect(() => {
     if (!isElectron) return;

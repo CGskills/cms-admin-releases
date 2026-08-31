@@ -1,21 +1,32 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, useSyncExternalStore, FormEvent } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(() =>
-    typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('error') === 'forbidden'
-      ? 'У аккаунта нет прав администратора. Проверьте ADMIN_EMAILS.'
-      : '',
+  const [error, setError] = useState('');
+  const queryError = useSyncExternalStore(
+    (onStoreChange) => {
+      window.addEventListener('popstate', onStoreChange);
+      return () => window.removeEventListener('popstate', onStoreChange);
+    },
+    () => new URLSearchParams(window.location.search).get('error') || '',
+    () => '',
   );
+  const forbiddenError = queryError === 'forbidden'
+    ? 'У аккаунта нет прав администратора. Проверьте ADMIN_EMAILS.'
+    : '';
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
+    if (queryError) {
+      window.history.replaceState(null, '', '/admin/login');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    }
     setIsLoading(true);
 
     try {
@@ -102,9 +113,9 @@ export default function LoginPage() {
               />
             </div>
 
-            {error && (
+            {(error || forbiddenError) && (
               <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-3 text-red-400 text-sm">
-                {error}
+                {error || forbiddenError}
               </div>
             )}
 

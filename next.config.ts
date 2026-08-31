@@ -21,12 +21,27 @@ const nextConfig: NextConfig = {
   // CMS data flow and avoid policies (such as HSTS) that would break the
   // packaged app's HTTP-only localhost origin.
   async headers() {
+    const isDevelopment = process.env.NODE_ENV === "development";
+    const contentSecurityPolicy = [
+      "default-src 'self'",
+      `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""}`,
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob: https://*.supabase.co",
+      "font-src 'self' data:",
+      "worker-src 'self' blob:",
+      `connect-src 'self' https://*.supabase.co wss://*.supabase.co${isDevelopment ? " ws: http://localhost:*" : ""}`,
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+    ].join('; ');
+
     return [
       {
         source: "/:path*",
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },
+          { key: "Content-Security-Policy", value: contentSecurityPolicy },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           {
             key: "Permissions-Policy",
