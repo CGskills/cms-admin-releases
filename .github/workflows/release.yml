@@ -32,7 +32,10 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
           ADMIN_EMAILS: ${{ secrets.ADMIN_EMAILS }}
-        run: npm run build && npm run desktop:prepare && npx electron-builder --win --config.publish=null
+        run: |
+          npm run build
+          npm run desktop:prepare
+          npx electron-builder --win --config.publish=never
 
       - name: Create release in cms-admin-releases
         env:
