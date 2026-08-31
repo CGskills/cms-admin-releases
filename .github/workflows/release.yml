@@ -36,7 +36,7 @@ jobs:
           npm run build
           npm run desktop:prepare
           node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json'));delete p.build.publish;fs.writeFileSync('package.json',JSON.stringify(p,null,2));"
-          npx electron-builder --win
+          npx electron-builder --win --publish never
 
       - name: Create release in cms-admin-releases
         env:
