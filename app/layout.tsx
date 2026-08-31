@@ -14,10 +14,11 @@ export const metadata: Metadata = {
   description: "Панель управления сайтом",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru" className={`h-full antialiased ${montserrat.variable}`} suppressHydrationWarning>
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="ru" suppressHydrationWarning>
+      <head />
+      <body className={`min-h-full flex flex-col h-full antialiased ${montserrat.variable}`} suppressHydrationWarning>{children}</body>
     </html>
   );
 }
