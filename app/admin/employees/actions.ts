@@ -3,6 +3,7 @@
 import { requireAdminServerContext } from '@/lib/auth/server';
 import type { AuthenticatedServerContext } from '@/lib/auth/server';
 import { validateCSRF } from '@/lib/auth/csrf';
+import { batchUpdateOrder } from '@/lib/database/batch-operations';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import {
@@ -129,15 +130,7 @@ export async function createEmployee(formData: FormData) {
     const photo_path = getFormText(formData, 'photo_path', 2_000);
     const published = formData.get('published') === 'true';
 
-    const { data: maxOrder } = await supabase
-      .from('employees')
-      .select('order_index')
-      .order('order_index', { ascending: false })
-      .limit(1)
-      .single();
-
-    const order_index = (maxOrder?.order_index ?? -1) + 1;
-
+    // order_index will be automatically assigned by database sequence
     const { error } = await supabase.from('employees').insert({
       first_name,
       last_name,
@@ -155,7 +148,6 @@ export async function createEmployee(formData: FormData) {
       achievements: achievements || null,
       photo_path: photo_path || null,
       published,
-      order_index,
     });
 
     if (error) throw new Error(error.message);
@@ -319,16 +311,11 @@ export async function reorderEmployees(ids: string[]) {
   assertUuidList(ids);
   const { supabase } = await requireAdminServerContext();
 
-  const updates = ids.map((id, index) =>
-    supabase
-      .from('employees')
-      .update({ order_index: index })
-      .eq('id', id)
-  );
+  // Convert ids array to items with order_index
+  const items = ids.map((id, index) => ({ id, order_index: index }));
 
-  const results = await Promise.all(updates);
-  const failedUpdate = results.find(({ error }) => error);
-  if (failedUpdate?.error) throw new Error(failedUpdate.error.message);
+  // Use optimized batch update
+  await batchUpdateOrder(supabase, 'employees', items);
 
   revalidatePath('/admin/employees');
   revalidatePath('/');

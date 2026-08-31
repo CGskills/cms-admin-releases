@@ -148,7 +148,7 @@ function PricingTableContent({ items, settings }: PricingTableContentProps) {
           meta: parsed.meta
         };
       }
-    } catch (e) {
+    } catch {
       return {};
     }
     return {};

@@ -76,7 +76,9 @@ export function assertSafeUrl(value: string, field = 'url'): void {
   }
 
   // Блокируем @ в hostname (phishing protection)
-  if (parsed.hostname.includes('@')) {
+  // Check both hostname and the full URL for @ after protocol
+  const urlWithoutProtocol = value.trim().replace(/^https?:\/\//, '');
+  if (urlWithoutProtocol.includes('@')) {
     throw new Error(`Invalid ${field} hostname`);
   }
 

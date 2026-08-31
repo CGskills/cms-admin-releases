@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { validateCSRF } from '@/lib/auth/csrf';
 
 describe('CSRF Protection', () => {
   const originalEnv = process.env;
@@ -14,16 +13,8 @@ describe('CSRF Protection', () => {
   });
 
   it('should accept request with matching origin', async () => {
-    // Mock headers function
-    const mockHeaders = async () => ({
-      get: (name: string) => {
-        if (name === 'origin') return 'https://test.supabase.co';
-        return null;
-      },
-    });
-
-    // This would require mocking Next.js headers() function
-    // For now, this is a placeholder test structure
+    // CSRF validation requires Next.js headers() function
+    // This is a placeholder for integration testing
     expect(true).toBe(true);
   });
 

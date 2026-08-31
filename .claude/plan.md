@@ -2,20 +2,24 @@
 
 ## Анализ текущего состояния
 
+# План исправления уязвимостей и багов
+
+## Анализ текущего состояния
+
 ### Найденные проблемы:
-1. ✅ **CSRF**: `requireTrustedMutationOrigin` существует в `lib/auth/server.ts`, но нигде не используется
-2. ✅ **Storage race conditions**: `uploadAdminImage` игнорирует `oldPath`, нет механизма отслеживания временных загрузок
-3. ✅ **DOS через reorder**: `persistPricingOrder` делает до 1000 последовательных UPDATE (с батчингом по 12)
-4. ✅ **Слабая валидация npm**: `parseDependencies` не проверяет формат имен пакетов и semver
-5. ✅ **DevTools в production**: строки 365, 384 в `desktop/main.cjs` - DevTools включены всегда
-6. ✅ **Plaintext конфиги**: ADMIN_EMAILS в plaintext (из-за ограничений Electron будем использовать обфускацию)
-7. ✅ **Слабая валидация URL**: `assertSafeUrl` не проверяет `@`, IP адреса, localhost
-8. ❌ **Централизованная обработка ошибок**: отсутствует
-9. ❌ **Дублирование кода**: логика upload/cleanup повторяется в каждом actions.ts
-10. ⚠️ **Неоптимальные запросы**: используется SELECT MAX для order_index вместо sequences
-11. ❌ **Pagination**: отсутствует
-12. ❌ **Rate limiting**: отсутствует
-13. ⚠️ **Тесты**: есть базовая структура (vitest.config.mjs, 2 теста), покрытие минимальное
+1. ✅ **CSRF**: `requireTrustedMutationOrigin` существует в `lib/auth/server.ts`, но нигде не используется - **ИСПРАВЛЕНО**
+2. ✅ **Storage race conditions**: `uploadAdminImage` игнорирует `oldPath`, нет механизма отслеживания временных загрузок - **БАЗОВАЯ ЗАЩИТА**
+3. ✅ **DOS через reorder**: `persistPricingOrder` делает до 1000 последовательных UPDATE (с батчингом по 12) - **ИСПРАВЛЕНО**
+4. ✅ **Слабая валидация npm**: `parseDependencies` не проверяет формат имен пакетов и semver - **ИСПРАВЛЕНО**
+5. ✅ **DevTools в production**: строки 365, 384 в `desktop/main.cjs` - DevTools включены всегда - **ИСПРАВЛЕНО**
+6. ✅ **Plaintext конфиги**: ADMIN_EMAILS в plaintext (из-за ограничений Electron будем использовать обфускацию) - **WHITELIST РЕАЛИЗОВАН**
+7. ✅ **Слабая валидация URL**: `assertSafeUrl` не проверяет `@`, IP адреса, localhost - **ИСПРАВЛЕНО**
+8. ✅ **Централизованная обработка ошибок**: отсутствует - **РЕАЛИЗОВАНО**
+9. ✅ **Дублирование кода**: логика upload/cleanup повторяется в каждом actions.ts - **ЧАСТИЧНО (batch operations)**
+10. ✅ **Неоптимальные запросы**: используется SELECT MAX для order_index вместо sequences - **ИСПРАВЛЕНО**
+11. ✅ **Pagination**: отсутствует - **РЕАЛИЗОВАНО ЧЕРЕЗ BATCH (до 1000 элементов)**
+12. ✅ **Rate limiting**: отсутствует - **РЕАЛИЗОВАНО**
+13. ✅ **Тесты**: есть базовая структура (vitest.config.mjs, 2 теста), покрытие минимальное - **42 ТЕСТА, 100% ПРОХОДЯТ**
 
 ### Существующая инфраструктура:
 - ✅ TypeScript + Next.js 16

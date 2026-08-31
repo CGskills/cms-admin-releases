@@ -2,6 +2,7 @@
 
 import { requireAdminServerContext } from '@/lib/auth/server';
 import { validateCSRF } from '@/lib/auth/csrf';
+import { batchUpdateOrder } from '@/lib/database/batch-operations';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import type { PricingSettings } from '@/types/pricing';
@@ -13,11 +14,10 @@ type PricingOrderItem = { id: string; order_index: number };
 type PricingOrderResponse = { error: { message: string } | null; count: number | null };
 
 /**
- * Persist a reorder without creating one request per row at the same time.
- * Keeping each batch settled before starting the next one prevents a failed
- * reorder from racing with client-side compensation while avoiding a request
- * storm for large price lists.
+ * @deprecated Use batchUpdateOrder from lib/database/batch-operations instead
+ * Legacy function kept for reference only
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function persistPricingOrder(
   items: PricingOrderItem[],
   update: (item: PricingOrderItem) => Promise<PricingOrderResponse>,
@@ -53,16 +53,7 @@ export async function createPricing(formData: FormData) {
     ? featuresStr.split(',').map((f) => f.trim()).filter(Boolean)
     : [];
 
-  const { data: maxOrder, error: maxOrderError } = await supabase
-    .from('pricing')
-    .select('order_index')
-    .order('order_index', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (maxOrderError) throw new Error(maxOrderError.message);
-
-  const order_index = maxOrder ? maxOrder.order_index + 1 : 0;
-
+  // order_index will be automatically assigned by database sequence
   const { error } = await supabase.from('pricing').insert({
     category,
     name,
@@ -70,7 +61,6 @@ export async function createPricing(formData: FormData) {
     price,
     duration: duration || '',
     features,
-    order_index,
     visible: true,
   });
 
@@ -137,9 +127,10 @@ export async function updatePricingOrder(items: { id: string; order_index: numbe
   await validateCSRF();
   assertOrderedItems(items);
   const { supabase } = await requireAdminServerContext();
-  await persistPricingOrder(items, async ({ id, order_index }) =>
-    supabase.from('pricing').update({ order_index }, { count: 'exact' }).eq('id', id)
-  );
+
+  // Use batch update function for better performance
+  await batchUpdateOrder(supabase, 'pricing', items);
+
   revalidatePath('/admin/pricing');
 }
 
@@ -381,18 +372,9 @@ export async function createPricingDirect(formData: FormData) {
   const featuresStr = getFormText(formData, 'features', 5_000);
 
   const duration = getFormText(formData, 'duration', 120);
-  const { data: maxOrder, error: maxOrderError } = await supabase
-    .from('pricing')
-    .select('order_index')
-    .order('order_index', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (maxOrderError) throw new Error(maxOrderError.message);
-
-  const order_index = maxOrder ? (maxOrder.order_index ?? 0) + 1 : 0;
-
   const features = featuresStr ? [featuresStr] : [];
 
+  // order_index will be automatically assigned by database sequence
   const { data, error } = await supabase
     .from('pricing')
     .insert({
@@ -401,7 +383,6 @@ export async function createPricingDirect(formData: FormData) {
       description,
       price,
       duration,
-      order_index,
       visible: true,
       features,
     })
@@ -526,9 +507,8 @@ export async function mutatePricingEditor(input: PricingEditorMutation): Promise
   switch (input.kind) {
     case 'reorder': {
       assertOrderedItems(input.items);
-      await persistPricingOrder(input.items, async ({ id, order_index }) =>
-        supabase.from('pricing').update({ order_index }, { count: 'exact' }).eq('id', id)
-      );
+      // Use optimized batch update
+      await batchUpdateOrder(supabase, 'pricing', input.items);
       break;
     }
     case 'updateItem': {
@@ -571,21 +551,13 @@ export async function mutatePricingEditor(input: PricingEditorMutation): Promise
       const name = editorText(input.name, 'name', 500, true);
       const price = editorText(input.price, 'price', 120);
       const features = editorFeatures(input.features);
-      const { data: maxOrder, error: maxOrderError } = await supabase
-        .from('pricing')
-        .select('order_index')
-        .order('order_index', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (maxOrderError) throw new Error(maxOrderError.message);
-      const highestOrder = maxOrder?.order_index;
-      const order_index = Number.isInteger(highestOrder) ? (highestOrder as number) + 1 : 0;
+
+      // order_index will be automatically assigned by database sequence
       const { error } = await supabase.from('pricing').insert({
         category,
         description,
         name,
         price,
-        order_index,
         visible: true,
         features: features as unknown as string[],
       });

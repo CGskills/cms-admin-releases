@@ -2,6 +2,7 @@
 
 import { requireAdminServerContext } from '@/lib/auth/server';
 import { validateCSRF } from '@/lib/auth/csrf';
+import { batchUpdateOrder } from '@/lib/database/batch-operations';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { logActivity } from '@/lib/activity/log';
@@ -181,15 +182,7 @@ export async function createPortfolio(formData: FormData) {
 
   slug = await generateUniqueSlug(supabase, slug);
 
-  const { data: maxOrder } = await supabase
-    .from('portfolio_items')
-    .select('order_index')
-    .order('order_index', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  const order_index = maxOrder ? maxOrder.order_index + 1 : 0;
-
+  // order_index will be automatically assigned by database sequence
   const { error } = await supabase.from('portfolio_items').insert({
     title,
     slug,
@@ -209,7 +202,6 @@ export async function createPortfolio(formData: FormData) {
     cover_x,
     cover_y,
     cover_zoom,
-    order_index,
     visible,
   });
 
@@ -387,13 +379,8 @@ export async function updatePortfolioOrder(
   assertOrderedItems(items);
   const { supabase } = await requireAdminServerContext();
 
-  const updates = items.map(({ id, order_index }) =>
-    supabase.from('portfolio_items').update({ order_index }).eq('id', id)
-  );
-
-  const results = await Promise.all(updates);
-  const failedUpdate = results.find(({ error }) => error);
-  if (failedUpdate?.error) throw new Error(failedUpdate.error.message);
+  // Use optimized batch update
+  await batchUpdateOrder(supabase, 'portfolio_items', items);
 
   revalidatePath('/admin/portfolio');
 }

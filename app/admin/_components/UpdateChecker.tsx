@@ -14,6 +14,24 @@ interface DownloadProgress {
   bytesPerSecond: number;
 }
 
+interface ElectronAPI {
+  getAppVersion: () => Promise<string>;
+  checkForUpdates: () => Promise<{ error?: string; updateInfo?: UpdateInfo }>;
+  downloadUpdate: () => Promise<{ error?: string }>;
+  installUpdate: () => void;
+  onUpdateAvailable: (callback: (info: UpdateInfo) => void) => () => void;
+  onUpdateNotAvailable: (callback: () => void) => () => void;
+  onUpdateDownloading: (callback: (progress: DownloadProgress) => void) => () => void;
+  onUpdateDownloaded: (callback: (info: UpdateInfo) => void) => () => void;
+  onUpdateError: (callback: (err: { message: string }) => void) => () => void;
+}
+
+declare global {
+  interface Window {
+    electronAPI?: ElectronAPI;
+  }
+}
+
 type UpdateStatus =
   | 'idle'
   | 'checking'
@@ -29,15 +47,12 @@ export default function UpdateChecker() {
   const [downloadProgress, setDownloadProgress] = useState<DownloadProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [currentVersion, setCurrentVersion] = useState<string>('');
-  const [isElectron, setIsElectron] = useState(false);
+  const [isElectron] = useState(() => typeof window !== 'undefined' && 'electronAPI' in window);
 
   useEffect(() => {
-    // Check if running in Electron
-    const checkElectron = typeof window !== 'undefined' && 'electronAPI' in window;
-    setIsElectron(checkElectron);
+    if (!isElectron) return;
 
-    if (checkElectron) {
-      const api = (window as any).electronAPI;
+    const api = window.electronAPI!;
 
       // Get current version
       api.getAppVersion().then((version: string) => {
@@ -87,8 +102,7 @@ export default function UpdateChecker() {
         unsubscribeDownloaded();
         unsubscribeError();
       };
-    }
-  }, []);
+  }, [isElectron]);
 
   const handleCheckForUpdates = async () => {
     if (!isElectron) return;
@@ -97,7 +111,7 @@ export default function UpdateChecker() {
     setError(null);
 
     try {
-      const api = (window as any).electronAPI;
+      const api = window.electronAPI!;
       const result = await api.checkForUpdates();
 
       if (result.error) {
@@ -137,7 +151,7 @@ export default function UpdateChecker() {
     setError(null);
 
     try {
-      const api = (window as any).electronAPI;
+      const api = window.electronAPI!;
       console.log('[UpdateChecker] Calling api.downloadUpdate()...');
       const result = await api.downloadUpdate();
       console.log('[UpdateChecker] Download result:', result);
@@ -165,8 +179,7 @@ export default function UpdateChecker() {
   const handleInstallUpdate = () => {
     if (!isElectron || status !== 'downloaded') return;
 
-    const api = (window as any).electronAPI;
-    api.installUpdate();
+    window.electronAPI!.installUpdate();
   };
 
   if (!isElectron) {

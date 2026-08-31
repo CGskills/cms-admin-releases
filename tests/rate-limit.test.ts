@@ -1,4 +1,13 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+// Mock server-only and Next.js headers
+vi.mock('server-only', () => ({}));
+vi.mock('next/headers', () => ({
+  headers: async () => ({
+    get: () => null
+  })
+}));
+
 import { checkRateLimit, clearRateLimits } from '@/lib/rate-limit/middleware';
 
 describe('Rate Limiting', () => {
@@ -44,7 +53,7 @@ describe('Rate Limiting', () => {
     await checkRateLimit(identifier, maxRequests, windowMs);
 
     // Should be blocked
-    let blocked = await checkRateLimit(identifier, maxRequests, windowMs);
+    const blocked = await checkRateLimit(identifier, maxRequests, windowMs);
     expect(blocked).toBe(false);
 
     // Wait for window to expire

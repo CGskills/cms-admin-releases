@@ -6,6 +6,7 @@ import {
   DndContext,
   type DraggableAttributes,
   type DraggableSyntheticListeners,
+  type DraggableNode,
   KeyboardSensor,
   PointerSensor,
   type DragEndEvent,
@@ -54,7 +55,7 @@ class FilteredKeyboardSensor extends KeyboardSensor {
       handler: (
         event: React.KeyboardEvent<Element>,
         options: KeyboardSensorOptions,
-        context: { active: any }
+        context: { active: DraggableNode }
       ) => {
         const target = event.target as HTMLElement;
 

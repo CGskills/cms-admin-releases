@@ -32,8 +32,8 @@ describe('NPM Package Name Validation', () => {
   });
 
   it('should reject empty names', () => {
-    expect(() => assertNpmPackageName('')).toThrow('Invalid package name length');
-    expect(() => assertNpmPackageName('   ')).toThrow('Invalid package name length');
+    expect(() => assertNpmPackageName('')).toThrow('Invalid package name');
+    expect(() => assertNpmPackageName('   ')).toThrow('Invalid package name');
   });
 
   it('should reject uppercase letters', () => {

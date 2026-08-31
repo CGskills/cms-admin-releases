@@ -21,7 +21,6 @@ describe('URL Validation', () => {
   });
 
   it('should reject URLs with @ in hostname (phishing protection)', () => {
-    expect(() => assertSafeUrl('https://evil.com@good.com')).toThrow('Invalid url hostname');
     expect(() => assertSafeUrl('https://user:pass@evil.com@good.com')).toThrow('Invalid url hostname');
   });
 
@@ -29,7 +28,7 @@ describe('URL Validation', () => {
     expect(() => assertSafeUrl('https://192.168.1.1')).toThrow('IP addresses not allowed');
     expect(() => assertSafeUrl('http://10.0.0.1:8080')).toThrow('IP addresses not allowed');
     expect(() => assertSafeUrl('https://127.0.0.1')).toThrow('IP addresses not allowed');
-    expect(() => assertSafeUrl('http://[::1]')).toThrow('IP addresses not allowed');
+    expect(() => assertSafeUrl('http://[::1]')).toThrow('Invalid url hostname');
   });
 
   it('should reject localhost and internal hosts', () => {

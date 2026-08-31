@@ -1,0 +1,98 @@
+
+> admin@0.2.4 desktop:dist:win
+> npm run build && npm run desktop:prepare && electron-builder --win
+
+
+> admin@0.2.4 build
+> next build
+
+▲ Next.js 16.3.1 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.ts took 55ms
+- Experiments (use with caution):
+  · serverActions
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 1796ms
+  Running TypeScript ...
+  Finished TypeScript in 3.5s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/32) ...
+  Generating static pages using 11 workers (8/32) 
+  Generating static pages using 11 workers (16/32) 
+  Generating static pages using 11 workers (24/32) 
+✓ Generating static pages using 11 workers (32/32) in 748ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/code-library
+├ ƒ /admin/code-library/[id]
+├ ƒ /admin/code-library/new
+├ ƒ /admin/employees
+├ ƒ /admin/employees/[id]
+├ ƒ /admin/employees/new
+├ ƒ /admin/login
+├ ƒ /admin/media
+├ ƒ /admin/pages
+├ ƒ /admin/pages/[id]
+├ ƒ /admin/pages/new
+├ ƒ /admin/portfolio
+├ ƒ /admin/portfolio/[id]
+├ ƒ /admin/portfolio/[id]/layout
+├ ƒ /admin/portfolio/new
+├ ƒ /admin/pricing
+├ ƒ /admin/pricing/[id]
+├ ƒ /admin/pricing/new
+├ ƒ /admin/services
+├ ƒ /admin/services/[id]
+├ ƒ /admin/services/new
+├ ƒ /admin/settings
+├ ƒ /admin/testimonials
+├ ƒ /admin/testimonials/[id]
+├ ƒ /admin/testimonials/new
+├ ƒ /api/clear-pricing
+├ ƒ /api/debug-code-blocks
+├ ƒ /api/dedup-pricing
+├ ƒ /api/delete-all-code-blocks
+├ ƒ /api/migrate-code-blocks
+├ ƒ /api/migrate-pricing
+├ ƒ /api/pricing-stats
+├ ƒ /api/restore-pricing
+├ ƒ /api/seed-code-blocks
+├ ƒ /api/seed-pricing
+├ ƒ /api/sync-pricing
+└ ƒ /api/update-code-block
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+
+> admin@0.2.4 desktop:prepare
+> node desktop/prepare-standalone.mjs
+
+Prepared standalone desktop server in .next\standalone (assets: public, .next/static, preview; env keys: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, ADMIN_EMAILS)
+  • electron-builder  version=26.15.3 os=10.0.22631
+  • loaded configuration  file=package.json ("build" field)
+  • author is missed in the package.json  appPackageFile=C:\Users\fomin\Desktop\admin\package.json
+  • executing @electron/rebuild  electronVersion=44.0.0 arch=x64 buildFromSource=false workspaceRoot=C:\Users\fomin\Desktop\admin projectDir=./ appDir=./
+  • installing native dependencies  arch=x64
+  • completed installing native dependencies
+  • packaging       platform=win32 arch=x64 electron=44.0.0 appOutDir=release\win-unpacked
+  • downloaded      label=electron progress=100%
+  • downloaded electron zip extracted successfully  output=C:\Users\fomin\Desktop\admin\release\win-unpacked
+  • searching for node modules  pm=npm searchDir=C:\Users\fomin\Desktop\admin
+  • duplicate dependency references  dependencies=["@codemirror/language@6.12.4","@codemirror/state@6.7.1","@codemirror/view@6.43.9","@codemirror/state@6.7.1","@codemirror/view@6.43.9","@lezer/highlight@1.2.3","@lezer/highlight@1.2.3","@lezer/lr@1.4.10","@codemirror/autocomplete@6.20.3","@codemirror/lang-css@6.3.1","@codemirror/lang-javascript@6.2.5","@codemirror/language@6.12.4","@codemirror/state@6.7.1","@codemirror/state@6.7.1","@lezer/css@1.3.6","@lezer/highlight@1.2.3","@lezer/lr@1.4.10","@codemirror/autocomplete@6.20.3","@codemirror/language@6.12.4","@codemirror/state@6.7.1","@codemirror/view@6.43.9","@codemirror/state@6.7.1","@codemirror/view@6.43.9","@lezer/highlight@1.2.3","@lezer/lr@1.4.10","@codemirror/language@6.12.4","@codemirror/state@6.7.1","@codemirror/view@6.43.9","@dnd-kit/utilities@3.2.2","react-dom@19.2.8","@dnd-kit/core@6.3.1","@dnd-kit/utilities@3.2.2","@emnapi/runtime@1.11.3","@supabase/supabase-js@2.112.3","@codemirror/language@6.12.4","@codemirror/state@6.7.1","@codemirror/view@6.43.9","@codemirror/state@6.7.1","@codemirror/theme-one-dark@6.1.3","@codemirror/view@6.43.9","@codemirror/autocomplete@6.20.3","@codemirror/commands@6.11.0","@codemirror/language@6.12.4","@codemirror/lint@6.9.7","@codemirror/state@6.7.1","@codemirror/view@6.43.9","@codemirror/state@6.7.1","@codemirror/view@6.43.9","@codemirror/autocomplete@6.20.3","@codemirror/commands@6.11.0","@codemirror/language@6.12.4","@codemirror/lint@6.9.7","@codemirror/search@6.7.1","@codemirror/state@6.7.1","@codemirror/view@6.43.9","react-dom@19.2.8","react-dom@19.2.8"]
+  • cannot find path for dependency  dependencies=["electron-log@undefined"]
+  • updating asar integrity executable resource  executablePath=release\win-unpacked\CMSAdminPanel.exe
+  • signing with signtool.exe  path=release\win-unpacked\CMSAdminPanel.exe
+  • building        target=nsis file=release\CMS-Admin-0.2.4-win-x64.exe archs=x64 oneClick=false perMachine=false
+  • signing with signtool.exe  path=release\win-unpacked\resources\elevate.exe
+  • signing with signtool.exe  path=release\CMS-Admin-0.2.4-win-x64.__uninstaller.exe
+  • signing with signtool.exe  path=release\CMS-Admin-0.2.4-win-x64.exe
+  • building block map  blockMapFile=release\CMS-Admin-0.2.4-win-x64.exe.blockmap

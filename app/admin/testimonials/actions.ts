@@ -3,6 +3,7 @@
 import { requireAdminServerContext } from '@/lib/auth/server';
 import type { AuthenticatedServerContext } from '@/lib/auth/server';
 import { validateCSRF } from '@/lib/auth/csrf';
+import { batchUpdateOrder } from '@/lib/database/batch-operations';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import {
@@ -128,16 +129,7 @@ export async function createTestimonial(formData: FormData) {
     const rating = getBoundedInteger(getFormText(formData, 'rating', 1), 5, 1, 5);
     const published = formData.get('published') === 'true';
 
-    // Get max order_index for new testimonial
-    const { data: maxOrder } = await supabase
-      .from('testimonials')
-      .select('order_index')
-      .order('order_index', { ascending: false })
-      .limit(1)
-      .single();
-
-    const order_index = (maxOrder?.order_index ?? -1) + 1;
-
+    // order_index will be automatically assigned by database sequence
     const { error } = await supabase.from('testimonials').insert({
       name,
       surname: surname || null,
@@ -150,7 +142,6 @@ export async function createTestimonial(formData: FormData) {
       source_url: source_url || null,
       rating,
       published,
-      order_index,
     });
 
     if (error) throw new Error(error.message);
@@ -323,16 +314,11 @@ export async function reorderTestimonials(ids: string[]) {
   assertUuidList(ids);
   const { supabase } = await requireAdminServerContext();
 
-  const updates = ids.map((id, index) =>
-    supabase
-      .from('testimonials')
-      .update({ order_index: index })
-      .eq('id', id)
-  );
+  // Convert ids array to items with order_index
+  const items = ids.map((id, index) => ({ id, order_index: index }));
 
-  const results = await Promise.all(updates);
-  const failedUpdate = results.find(({ error }) => error);
-  if (failedUpdate?.error) throw new Error(failedUpdate.error.message);
+  // Use optimized batch update
+  await batchUpdateOrder(supabase, 'testimonials', items);
 
   revalidatePath('/admin/testimonials');
   revalidatePath('/'); // Revalidate public page
