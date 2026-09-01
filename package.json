@@ -1,6 +1,6 @@
 {
   "name": "admin",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "CMS Admin Panel desktop application",
   "private": true,
   "main": "desktop/main.cjs",
@@ -68,7 +68,7 @@
     "publish": {
       "provider": "github",
       "owner": "CGskills",
-      "repo": "cms-admin",
+      "repo": "cms-admin-releases",
       "releaseType": "release"
     },
     "win": {

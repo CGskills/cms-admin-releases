@@ -433,17 +433,8 @@ async function boot() {
   const window = createMainWindow();
   await window.loadURL(`${origin}${START_PATH}`);
 
-  // Auto-update check temporarily disabled until proper authentication is configured
-  // for private repository access. Users can manually check for updates via the UI button.
-  //
-  // ISSUE: Private GitHub repository returns 404 for release assets without authentication.
-  // SOLUTION: Configure generic provider with public hosting OR make releases repository public.
-  // See AUTO_UPDATE_ANALYSIS.md and AUTO_UPDATE_FIX_GUIDE.md for detailed solutions.
-  console.log('[Main] Auto-update check disabled - manual check available in UI');
-  console.log('[Main] To re-enable: configure authentication or use generic provider');
-
-  // For manual check only - uncomment after fixing authentication:
-  /*
+  // Auto-update configured for public release repository: cms-admin-releases
+  // Public repository allows electron-updater to check for updates without authentication
   if (app.isPackaged) {
     console.log('[Main] Scheduling auto-update check...');
     setTimeout(() => {
@@ -456,7 +447,6 @@ async function boot() {
   } else {
     console.log('[Main] Auto-update disabled in development mode');
   }
-  */
 }
 
 const gotSingleInstanceLock = app.requestSingleInstanceLock();

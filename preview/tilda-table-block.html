@@ -423,7 +423,7 @@
       var feat=parseFeatures(r);
       var si=feat.slideIndex||0;
       while(subObj.slides.length<=si){subObj.slides.push({subtitleTitle:'',subtitle:'',rows:[]});}
-      subObj.slides[si].rows.push({name:r.name||'',meta:r.duration||'',details:feat.meta||feat.subtitle||'',price:r.price||'\u2014'});
+      subObj.slides[si].rows.push({name:r.name||'',meta:feat.meta||r.duration||'',details:feat.meta||feat.subtitle||'',price:r.price||'\u2014'});
       if(feat.subtitleTitle)subObj.slides[si].subtitleTitle=feat.subtitleTitle;
       if(feat.subtitle)subObj.slides[si].subtitle=feat.subtitle;
     });

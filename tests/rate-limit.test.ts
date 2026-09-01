@@ -44,7 +44,7 @@ describe('Rate Limiting', () => {
     await checkRateLimit(identifier, maxRequests, windowMs);
 
     // Should be blocked
-    let blocked = await checkRateLimit(identifier, maxRequests, windowMs);
+    const blocked = await checkRateLimit(identifier, maxRequests, windowMs);
     expect(blocked).toBe(false);
 
     // Wait for window to expire
