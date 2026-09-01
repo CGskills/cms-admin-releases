@@ -145,6 +145,15 @@ export async function updateCodeBlock(id: string, formData: FormData) {
   const status = parseStatus(formData.get('status'));
   const dependencies = parseDependencies(formData.get('dependencies'));
 
+  console.log('[updateCodeBlock] Saving code block:', {
+    id,
+    name,
+    htmlLength: html.length,
+    cssLength: css.length,
+    jsLength: javascript.length,
+    depsCount: dependencies.length,
+  });
+
   // Bump patch version
   const { data: existing, error: existingError } = await supabase
     .from('code_blocks')
@@ -182,6 +191,14 @@ export async function updateCodeBlock(id: string, formData: FormData) {
   if (count !== 1) {
     throw new Error('Code block was not found or was not updated');
   }
+
+  console.log('[updateCodeBlock] Successfully saved:', {
+    id,
+    version: newVersion,
+    htmlLength: html.length,
+    cssLength: css.length,
+    jsLength: javascript.length,
+  });
 
   await logActivity({
     action: 'update',

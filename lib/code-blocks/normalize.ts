@@ -5,6 +5,7 @@ import type {
   CodeBlockStatus,
   ValidationStatus,
 } from '@/types/code-blocks';
+import { parseCodeBlockSource } from '@/lib/code-library';
 
 const categories = new Set<CodeBlockCategory>([
   'hero', 'gallery', 'slider', 'before_after', 'interactive', 'team', 'reviews',
@@ -28,6 +29,15 @@ export function normalizeDependencies(value: unknown): CodeBlockDependency[] {
   });
 }
 
+/**
+ * Check if a code block is legacy (has code in html field but css/js are empty)
+ */
+function isLegacyBlock(html: string, css: string, javascript: string): boolean {
+  const hasEmptyFields = (!css || css.trim() === '') && (!javascript || javascript.trim() === '');
+  const htmlHasStyleOrScript = html.includes('<style') || html.includes('<script');
+  return hasEmptyFields && htmlHasStyleOrScript;
+}
+
 /** Converts nullable/legacy Supabase rows into the stable client contract. */
 export function normalizeCodeBlock(value: unknown): CodeBlock | null {
   if (!value || typeof value !== 'object') return null;
@@ -47,14 +57,33 @@ export function normalizeCodeBlock(value: unknown): CodeBlock | null {
     ? row.responsive_status as ValidationStatus
     : 'unchecked';
 
+  let html = text(row.html);
+  let css = text(row.css);
+  let javascript = text(row.javascript);
+
+  // Normalize legacy blocks on-the-fly for display
+  if (isLegacyBlock(html, css, javascript)) {
+    const parsed = parseCodeBlockSource(html);
+    html = parsed.html;
+    css = parsed.css;
+    javascript = parsed.javascript;
+
+    console.log(`[normalize] Legacy block detected (id: ${id}):`, {
+      originalHtmlLength: text(row.html).length,
+      parsedHtmlLength: html.length,
+      parsedCssLength: css.length,
+      parsedJsLength: javascript.length,
+    });
+  }
+
   return {
     id,
     name: text(row.name) || 'Untitled',
     description: text(row.description),
     category,
-    html: text(row.html),
-    css: text(row.css),
-    javascript: text(row.javascript),
+    html,
+    css,
+    javascript,
     version: text(row.version) || '1.0.0',
     status,
     responsive_status,

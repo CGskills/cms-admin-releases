@@ -339,6 +339,7 @@ export default function CodeBlockForm({ codeBlock }: CodeBlockFormProps) {
               javascript={javascript}
               dependencies={dependencies}
               blockName={name}
+              blockId={codeBlock?.id}
             />
           )}
         </div>

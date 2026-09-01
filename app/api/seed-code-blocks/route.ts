@@ -2,7 +2,8 @@ import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import { requireAdminApi } from '@/lib/auth/api';
 import { readFileSync } from 'fs';
-import { join } from 'path';
+import { join, basename } from 'path';
+import { parseCodeBlockSource } from '@/lib/code-library';
 
 export const runtime = 'nodejs';
 
@@ -59,102 +60,124 @@ export async function POST(request: Request) {
     },
   ];
 
-  // Read and validate every source before touching the database. This keeps a
-  // missing/broken preview file from deleting a user's existing library.
-  const rows: Array<Record<string, unknown>> = [];
-  const results: Array<Record<string, unknown>> = [];
+  const results: Array<{
+    name: string;
+    slug: string;
+    sourceFile: string;
+    htmlLength?: number;
+    cssLength?: number;
+    javascriptLength?: number;
+    dependenciesCount?: number;
+    action?: 'created' | 'updated' | 'skipped';
+    error?: string;
+  }> = [];
 
+  // Process each block individually with error handling
   for (const block of blocks) {
+    const slug = basename(block.file, '.html');
+    const resultEntry = {
+      name: block.name,
+      slug,
+      sourceFile: block.file,
+    };
+
     try {
       const filePath = join(previewDir, block.file);
       const rawContent = readFileSync(filePath, 'utf-8');
 
-      // Extract external CDN dependencies for display
-      const deps: { name: string; version?: string; cdnUrl: string }[] = [];
-      const scriptSrcMatches = rawContent.match(/<script[^>]+src="([^"]+)"[^>]*>/gi);
-      if (scriptSrcMatches) {
-        for (const tag of scriptSrcMatches) {
-          const urlMatch = tag.match(/src="([^"]+)"/);
-          if (urlMatch) {
-            const url = urlMatch[1];
-            let name = 'External Library';
-            let version: string | undefined;
-            if (url.includes('supabase')) {
-              name = 'Supabase JS';
-              const vMatch = url.match(/@([^/]+)/);
-              version = vMatch ? vMatch[1] : '2';
-            }
-            deps.push({ name, version, cdnUrl: url });
-          }
-        }
+      // Parse the source file to extract HTML, CSS, JavaScript, and dependencies
+      const { html, css, javascript, dependencies } = parseCodeBlockSource(rawContent);
+
+      // Convert dependencies to the format expected by the database
+      // Note: Dependency from parseCodeBlockSource doesn't have version field
+      const deps = dependencies.map(dep => ({
+        name: dep.name || '',
+        cdnUrl: dep.cdnUrl,
+        // version field not available in parsed dependencies
+      }));
+
+      // Check if block already exists by slug
+      const { data: existingBlock, error: fetchError } = await supabase
+        .from('code_blocks')
+        .select('id')
+        .eq('name', block.name)
+        .maybeSingle();
+
+      if (fetchError) {
+        results.push({ ...resultEntry, error: fetchError.message });
+        continue;
       }
 
-      // Store the ENTIRE file as-is in html — no lossy HTML/CSS/JS splitting.
-      rows.push({
+      const blockData = {
         name: block.name,
         description: block.description,
         category: block.category,
-        html: rawContent,
-        css: '',
-        javascript: '',
+        html,
+        css,
+        javascript,
+        dependencies: deps,
         version: '1.0.0',
         status: 'ready',
-        dependencies: deps,
-      });
-      results.push({ name: block.name, sourceBytes: rawContent.length });
+      };
+
+      if (existingBlock) {
+        // Update existing block
+        const { error: updateError } = await supabase
+          .from('code_blocks')
+          .update(blockData)
+          .eq('id', existingBlock.id);
+
+        if (updateError) {
+          results.push({ ...resultEntry, error: updateError.message });
+        } else {
+          results.push({
+            ...resultEntry,
+            htmlLength: html.length,
+            cssLength: css.length,
+            javascriptLength: javascript.length,
+            dependenciesCount: deps.length,
+            action: 'updated',
+          });
+        }
+      } else {
+        // Insert new block
+        const { error: insertError } = await supabase
+          .from('code_blocks')
+          .insert([blockData]);
+
+        if (insertError) {
+          results.push({ ...resultEntry, error: insertError.message });
+        } else {
+          results.push({
+            ...resultEntry,
+            htmlLength: html.length,
+            cssLength: css.length,
+            javascriptLength: javascript.length,
+            dependenciesCount: deps.length,
+            action: 'created',
+          });
+        }
+      }
     } catch (e) {
       results.push({
-        name: block.name,
+        ...resultEntry,
         error: e instanceof Error ? e.message : 'Unknown error',
       });
     }
   }
 
-  const sourceErrors = results.filter((result) => result.error);
-  if (sourceErrors.length) {
-    return NextResponse.json({ results: sourceErrors }, { status: 400 });
-  }
+  // Check for errors
+  const errors = results.filter(r => r.error);
+  const successes = results.filter(r => !r.error);
 
-  const { data: existing, error: existingError } = await supabase
-    .from('code_blocks')
-    .select('id');
-  if (existingError) {
-    return NextResponse.json({ error: existingError.message }, { status: 500 });
-  }
-
-  // Insert all rows in one statement. PostgreSQL applies the statement
-  // atomically, so a validation/RLS error cannot leave a half-imported set.
-  const { data: inserted, error: insertError } = await supabase
-    .from('code_blocks')
-    .insert(rows)
-    .select('id, html');
-  if (insertError || !inserted || inserted.length !== rows.length) {
-    return NextResponse.json(
-      { error: insertError?.message || 'Import did not create all code blocks' },
-      { status: 500 },
-    );
-  }
-
-  const cleanupIds = (existing || []).map((row) => row.id).filter(Boolean);
-  let cleanupWarning: string | undefined;
-  if (cleanupIds.length) {
-    const { error: cleanupError } = await supabase
-      .from('code_blocks')
-      .delete()
-      .in('id', cleanupIds);
-    if (cleanupError) cleanupWarning = cleanupError.message;
-  }
-
-  const finalResults = results.map((result, index) => {
-    const storedChars = typeof inserted[index]?.html === 'string' ? inserted[index].html.length : 0;
-    const sourceBytes = typeof result.sourceBytes === 'number' ? result.sourceBytes : 0;
-    return {
-      ...result,
-      success: true,
-      storedChars,
-      match: storedChars === sourceBytes ? 'OK' : 'MISMATCH',
-    };
+  return NextResponse.json({
+    results,
+    summary: {
+      total: blocks.length,
+      success: successes.length,
+      errors: errors.length,
+      created: successes.filter(r => r.action === 'created').length,
+      updated: successes.filter(r => r.action === 'updated').length,
+    },
   });
-
-  return NextResponse.json({ results: finalResults, ...(cleanupWarning ? { warning: cleanupWarning } : {}) });
 }
