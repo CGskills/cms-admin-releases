@@ -27,22 +27,13 @@ jobs:
       - name: Build Next.js app
         run: npm run build
 
-      - name: Build Electron app
+      - name: Build and publish Electron app
         env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
           ADMIN_EMAILS: ${{ secrets.ADMIN_EMAILS }}
-        run: |
-          npm run build
-          npm run desktop:prepare
-          node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json'));delete p.build.publish;fs.writeFileSync('package.json',JSON.stringify(p,null,2));"
-          npx electron-builder --win --publish never
-
-      - name: Create release in cms-admin-releases
-        env:
-          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-        run: |
-          gh release create ${{ github.ref_name }} --repo CGskills/cms-admin-releases --title "CMS Admin ${{ github.ref_name }}" --notes "Auto-update release for CMS Admin desktop application" release/*.exe release/*.blockmap release/latest.yml
+        run: npm run desktop:dist:win -- --publish always
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

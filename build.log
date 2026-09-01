@@ -1,0 +1,69 @@
+
+> admin@0.2.4 build
+> next build
+
+▲ Next.js 16.3.1 (Turbopack)
+✓ Running next.config.ts took 178ms
+- Experiments (use with caution):
+  · serverActions
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 16.9s
+  Running TypeScript ...
+  Finished TypeScript in 9.9s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/32) ...
+  Generating static pages using 11 workers (8/32) 
+  Generating static pages using 11 workers (16/32) 
+  Generating static pages using 11 workers (24/32) 
+✓ Generating static pages using 11 workers (32/32) in 791ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/code-library
+├ ƒ /admin/code-library/[id]
+├ ƒ /admin/code-library/new
+├ ƒ /admin/employees
+├ ƒ /admin/employees/[id]
+├ ƒ /admin/employees/new
+├ ƒ /admin/login
+├ ƒ /admin/media
+├ ƒ /admin/pages
+├ ƒ /admin/pages/[id]
+├ ƒ /admin/pages/new
+├ ƒ /admin/portfolio
+├ ƒ /admin/portfolio/[id]
+├ ƒ /admin/portfolio/[id]/layout
+├ ƒ /admin/portfolio/new
+├ ƒ /admin/pricing
+├ ƒ /admin/pricing/[id]
+├ ƒ /admin/pricing/new
+├ ƒ /admin/services
+├ ƒ /admin/services/[id]
+├ ƒ /admin/services/new
+├ ƒ /admin/settings
+├ ƒ /admin/testimonials
+├ ƒ /admin/testimonials/[id]
+├ ƒ /admin/testimonials/new
+├ ƒ /api/clear-pricing
+├ ƒ /api/debug-code-blocks
+├ ƒ /api/dedup-pricing
+├ ƒ /api/delete-all-code-blocks
+├ ƒ /api/migrate-code-blocks
+├ ƒ /api/migrate-pricing
+├ ƒ /api/pricing-stats
+├ ƒ /api/restore-pricing
+├ ƒ /api/seed-code-blocks
+├ ƒ /api/seed-pricing
+├ ƒ /api/sync-pricing
+└ ƒ /api/update-code-block
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

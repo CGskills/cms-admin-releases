@@ -212,9 +212,11 @@
       font-size: clamp(9px, 0.8vw, 12px);
       color: rgba(255,255,255,0.85);
       line-height: 1.4;
-      text-align: left;
+      text-align: center;
       display: flex;
-      align-items: flex-end;
+      align-items: center;
+      justify-content: center;
+      min-height: 2.8em;
     }
 
     .specialists-section .card-nav-hint {
@@ -288,7 +290,8 @@
       .specialists-section .stat-value { font-size: 20px; text-align: center; white-space: nowrap; }
       .specialists-section .stat-label {
         font-size: 11px; text-align: center;
-        display: flex; align-items: flex-end; justify-content: center;
+        display: flex; align-items: center; justify-content: center;
+        min-height: 2.8em;
       }
       .specialists-section .card-nav-hint { font-size: 32px; right: 20px; }
     }
@@ -310,7 +313,8 @@
       .specialists-section .stat-value { font-size: 17px; white-space: nowrap; }
       .specialists-section .stat-label {
         font-size: 10px;
-        display: flex; align-items: flex-end; justify-content: center;
+        display: flex; align-items: center; justify-content: center;
+        min-height: 2.8em;
       }
     }
 
@@ -392,7 +396,7 @@
 
       html += '<div class="stat"><div class="stat-value">' + emp.courses_count + '</div>';
       html += '<div class="stat-bar"><div class="stat-bar-fill"></div></div>';
-      html += '<div class="stat-label">курсов повышения квалификации</div></div>';
+      html += '<div class="stat-label">Повышения квалификации</div></div>';
       html += '</div>';
 
       html += '</div>';

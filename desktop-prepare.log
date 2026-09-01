@@ -1,0 +1,5 @@
+
+> admin@0.2.4 desktop:prepare
+> node desktop/prepare-standalone.mjs
+
+Prepared standalone desktop server in .next\standalone (assets: public, .next/static, preview; env keys: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, ADMIN_EMAILS)
