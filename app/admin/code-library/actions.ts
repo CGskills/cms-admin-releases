@@ -46,10 +46,13 @@ function parseDependencies(value: FormDataEntryValue | null): CodeBlockDependenc
   }
   if (!Array.isArray(parsed) || parsed.length > 100) throw new Error('Invalid dependencies');
 
-  return parsed.map((entry) => {
+  return parsed.flatMap((entry) => {
     if (!isPlainRecord(entry) || typeof entry.name !== 'string') throw new Error('Invalid dependency');
     const name = entry.name.trim();
-    if (!name || name.length > 200) throw new Error('Invalid dependency name');
+    // Empty rows are created by the optional dependency editor. Ignore them
+    // so adding a row and saving without filling it cannot brick the form.
+    if (!name) return [];
+    if (name.length > 200) throw new Error('Invalid dependency name');
 
     // Validate npm package name format
     assertNpmPackageName(name);
@@ -72,7 +75,7 @@ function parseDependencies(value: FormDataEntryValue | null): CodeBlockDependenc
       if (cdnUrl) assertSafeUrl(cdnUrl, 'dependency URL');
     }
 
-    return { name, ...(version ? { version } : {}), ...(cdnUrl ? { cdnUrl } : {}) };
+    return [{ name, ...(version ? { version } : {}), ...(cdnUrl ? { cdnUrl } : {}) }];
   });
 }
 

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { fetchJson } from '@/lib/http/fetch-json';
 
 export default function ImportPreviewButton() {
   const router = useRouter();
@@ -13,14 +14,17 @@ export default function ImportPreviewButton() {
     setResult(null);
 
     try {
-      const res = await fetch('/api/seed-code-blocks', { method: 'POST' });
-      const data = await res.json();
+      const { response: res, data } = await fetchJson<{
+        error?: string;
+        results?: Array<{ success?: boolean; error?: string }>;
+      }>('/api/seed-code-blocks', { method: 'POST' });
 
       if (!res.ok) {
-        setResult(`Ошибка: ${data.error}`);
+        setResult(`Ошибка: ${data.error || `HTTP ${res.status}`}`);
       } else {
-        const successCount = data.results.filter((r: { success?: boolean }) => r.success).length;
-        const errorCount = data.results.filter((r: { error?: string }) => r.error).length;
+        const results = data.results || [];
+        const successCount = results.filter((r) => r.success).length;
+        const errorCount = results.filter((r) => r.error).length;
         setResult(`Импортировано: ${successCount}, ошибок: ${errorCount}`);
         if (successCount > 0) {
           router.refresh();

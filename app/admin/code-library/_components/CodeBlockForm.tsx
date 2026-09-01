@@ -64,6 +64,10 @@ export default function CodeBlockForm({ codeBlock }: CodeBlockFormProps) {
 
       if (codeBlock) {
         await updateCodeBlock(codeBlock.id, formData);
+        // updateCodeBlock intentionally stays on the edit page; unlock the
+        // editor and refresh the server props so the persisted version is shown.
+        setIsSubmitting(false);
+        router.refresh();
       } else {
         await createCodeBlock(formData);
       }
@@ -313,7 +317,7 @@ export default function CodeBlockForm({ codeBlock }: CodeBlockFormProps) {
 
           {/* Preview tab */}
           {activeMainTab === 'preview' && (
-            <CodePreview html={html} css={css} javascript={javascript} />
+            <CodePreview html={html} css={css} javascript={javascript} dependencies={dependencies} />
           )}
 
           {/* Validation tab */}

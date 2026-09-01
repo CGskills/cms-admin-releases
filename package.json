@@ -1,6 +1,6 @@
 {
   "name": "admin",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "CMS Admin Panel desktop application",
   "private": true,
   "main": "desktop/main.cjs",
@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "node .next/standalone/server.js",
     "desktop:prepare": "node desktop/prepare-standalone.mjs",
     "desktop:dev": "npm run build && npm run desktop:prepare && electron .",
     "desktop:dist": "npm run build && npm run desktop:prepare && electron-builder",
@@ -52,6 +52,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.1",
     "tailwindcss": "^4",
+    "tsx": "^4.23.13",
     "typescript": "^5",
     "vitest": "^4.1.11"
   },

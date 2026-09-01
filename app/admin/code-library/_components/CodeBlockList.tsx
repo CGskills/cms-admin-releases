@@ -10,6 +10,7 @@ import {
   type CodeBlock,
   type CodeBlockCategory,
 } from '@/types/code-blocks';
+import { buildExportCode } from '@/lib/code-blocks/export';
 
 interface CodeBlockListProps {
   initialBlocks: CodeBlock[];
@@ -72,71 +73,30 @@ export default function CodeBlockList({ initialBlocks }: CodeBlockListProps) {
   };
 
   const handleCopyCode = async (block: CodeBlock) => {
-    let codeToCopy: string;
-
-    // If css/js fields are empty and html contains style/script tags,
-    // it's a full block (imported from preview) — output as-is
-    const isFullBlock = !block.css && !block.javascript &&
-      (block.html.includes('<style') || block.html.includes('<script'));
-
-    if (isFullBlock) {
-      codeToCopy = block.html;
-    } else {
-      // User-created fragment — reconstruct with namespace wrapping
-      const namespace = `tilda-${block.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 20)}`;
-      const wrappedCss = block.css
-        ? block.css.replace(/([^{}@][^{}]*?)\s*\{/g, (match, selectors) => {
-            if (selectors.trim().startsWith('@')) return match;
-            const wrapped = selectors
-              .split(',')
-              .map((s: string) => {
-                const trimmed = s.trim();
-                if (!trimmed || trimmed.startsWith('@')) return trimmed;
-                if (trimmed === '*' || trimmed === 'body' || trimmed === 'html') return trimmed;
-                if (trimmed.startsWith('.') || trimmed.startsWith('#') || trimmed.startsWith('[') || trimmed.startsWith(':')) {
-                  return `.${namespace} ${trimmed}`;
-                }
-                if (/^[a-z]/i.test(trimmed)) {
-                  return `.${namespace} ${trimmed}`;
-                }
-                return trimmed;
-              })
-              .join(', ');
-            return `${wrapped} {`;
-          })
-        : '';
-
-      const depScripts = (block.dependencies || [])
-        .filter((d) => d.cdnUrl)
-        .map((d) => `<script src="${d.cdnUrl}"></script>`)
-        .join('\n');
-
-      const parts: string[] = [];
-      if (depScripts) parts.push(depScripts);
-      if (wrappedCss) parts.push(`<style>\n${wrappedCss}\n</style>`);
-      parts.push(`<div class="${namespace}">\n${block.html}\n</div>`);
-      if (block.javascript) {
-        parts.push(`<script>\n(function() {\n  ${block.javascript}\n})();\n</script>`);
-      }
-      codeToCopy = parts.join('\n\n');
-    }
+    const codeToCopy = buildExportCode(block.html, block.css, block.javascript, block.dependencies || [], block.name);
 
     try {
       await navigator.clipboard.writeText(codeToCopy);
-      setCopiedId(block.id);
-      setTimeout(() => setCopiedId(null), 2000);
     } catch {
+      // Clipboard API is unavailable in insecure/embedded contexts. Keep the
+      // fallback isolated and always clean up the temporary element.
       const textarea = document.createElement('textarea');
       textarea.value = codeToCopy;
       textarea.style.position = 'fixed';
       textarea.style.opacity = '0';
       document.body.appendChild(textarea);
       textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-      setCopiedId(block.id);
-      setTimeout(() => setCopiedId(null), 2000);
+      try {
+        if (!document.execCommand('copy')) throw new Error('copy failed');
+      } catch {
+        alert('Не удалось скопировать код. Выделите его во вкладке Export и скопируйте вручную.');
+        return;
+      } finally {
+        textarea.remove();
+      }
     }
+    setCopiedId(block.id);
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   const getStatusBadge = (status: string) => {

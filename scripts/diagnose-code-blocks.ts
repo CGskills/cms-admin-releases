@@ -1,7 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = 'https://pjujhrfkykxgzcexyyti.supabase.co';
-const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBqdWpocmZreWt4Z3pjZXh5eXRpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjY1NjExNywiZXhwIjoyMTAyMjMyMTE3fQ.HwpQuze5kwc2sDUZnvfWeiYuv5v7tI2RTFVy9l2xeXs';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? '';
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
+if (!SUPABASE_URL) throw new Error('NEXT_PUBLIC_SUPABASE_URL is required');
+if (!PUBLISHABLE_KEY) throw new Error('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY is required');
+if (!SERVICE_ROLE_KEY) throw new Error('SUPABASE_SERVICE_ROLE_KEY is required');
 
 async function diagnoseCodeBlocks() {
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
@@ -88,8 +92,8 @@ async function diagnoseCodeBlocks() {
   console.log('\n3. Тест чтения через publishable key (симуляция браузера)...');
 
   const publicClient = createClient(
-    'https://pjujhrfkykxgzcexyyti.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBqdWpocmZreWt4Z3pjZXh5eXRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2NTYxMTcsImV4cCI6MjEwMjIzMjExN30.3pN-9uqzP_3H30RDN_9LiCCQmS0D3_Vgo6w_b0IMDvk'
+    SUPABASE_URL,
+    PUBLISHABLE_KEY
   );
 
   // Попытка без авторизации

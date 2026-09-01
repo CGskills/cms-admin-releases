@@ -1,11 +1,14 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import type { CodeBlockDependency } from '@/types/code-blocks';
+import { appendCodeToDocument, isFullDocument, extractEmbeddedCode } from '@/lib/code-blocks/export';
 
 interface CodePreviewProps {
   html: string;
   css: string;
   javascript: string;
+  dependencies?: CodeBlockDependency[];
 }
 
 const BREAKPOINTS = [
@@ -19,11 +22,7 @@ const BREAKPOINTS = [
   { label: '1920px', width: 1920 },
 ];
 
-function isFullDocument(html: string): boolean {
-  return html.includes('<!DOCTYPE') || html.includes('<html');
-}
-
-export default function CodePreview({ html: htmlCode, css: cssCode, javascript: jsCode }: CodePreviewProps) {
+export default function CodePreview({ html: htmlCode, css: cssCode, javascript: jsCode, dependencies = [] }: CodePreviewProps) {
   const [activeBreakpoint, setActiveBreakpoint] = useState(1440);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -33,18 +32,25 @@ export default function CodePreview({ html: htmlCode, css: cssCode, javascript: 
 
     let fullHtml: string;
 
-    // If css/js are empty and html contains style/script, it's a full block
-    const isFullBlock = !cssCode && !jsCode &&
-      (htmlCode.includes('<style') || htmlCode.includes('<script'));
+    // Check if this is a complete HTML document
+    const isFullDoc = isFullDocument(htmlCode);
 
-    if (isFullDocument(htmlCode) || isFullBlock) {
-      // Full block — render as-is
-      fullHtml = htmlCode;
+    if (isFullDoc) {
+      // Full document — append css/js if provided
+      fullHtml = appendCodeToDocument(htmlCode, cssCode, jsCode, dependencies);
     } else {
-      // Fragment — wrap with namespace
+      // Fragment — extract embedded styles/scripts and merge with separate css/js fields
+      const extracted = extractEmbeddedCode(htmlCode);
+
+      // Merge extracted code with provided css/js (provided takes precedence)
+      const mergedCss = cssCode.trim() || extracted.css;
+      const mergedJs = jsCode.trim() || extracted.javascript;
+      const cleanHtml = extracted.html || htmlCode;
+
+      // Wrap fragment with namespace
       const namespace = 'tilda-preview-block';
-      const wrappedCss = cssCode
-        ? cssCode.replace(/([^{}@][^{}]*?)\s*\{/g, (match, selectors) => {
+      const wrappedCss = mergedCss
+        ? mergedCss.replace(/([^{}@][^{}]*?)\s*\{/g, (match, selectors) => {
             if (selectors.trim().startsWith('@')) return match;
             const wrapped = selectors
               .split(',')
@@ -65,11 +71,18 @@ export default function CodePreview({ html: htmlCode, css: cssCode, javascript: 
           })
         : '';
 
+      // Build CDN scripts that aren't already in the HTML
+      const cdnScripts = dependencies
+        .filter((d) => d.cdnUrl && !htmlCode.includes(d.cdnUrl))
+        .map((d) => `<script src="${d.cdnUrl!.replace(/"/g, '&quot;')}"></script>`)
+        .join('\n');
+
       fullHtml = `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+${cdnScripts}
 <style>
 .${namespace} { font-family: 'Montserrat', Arial, sans-serif; line-height: 1.5; }
 ${wrappedCss}
@@ -77,12 +90,12 @@ ${wrappedCss}
 </head>
 <body style="margin:0;padding:0;overflow-x:hidden;">
 <div class="${namespace}">
-${htmlCode || '<p style="color:#94a3b8;text-align:center;padding:40px;">No HTML content</p>'}
+${cleanHtml || '<p style="color:#94a3b8;text-align:center;padding:40px;">No HTML content</p>'}
 </div>
 <script>
 (function() {
   try {
-    ${jsCode || ''}
+    ${mergedJs || ''}
   } catch(e) {
     console.error('Preview JS error:', e);
   }
@@ -92,11 +105,8 @@ ${htmlCode || '<p style="color:#94a3b8;text-align:center;padding:40px;">No HTML 
 </html>`;
     }
 
-    // Assign srcdoc instead of reaching into contentDocument. This keeps the
-    // preview compatible with an opaque sandbox origin (`allow-scripts` only)
-    // while preventing user-authored code from reading the admin document.
     iframe.srcdoc = fullHtml;
-  }, [htmlCode, cssCode, jsCode]);
+  }, [htmlCode, cssCode, jsCode, dependencies]);
 
   return (
     <div>
@@ -131,7 +141,7 @@ ${htmlCode || '<p style="color:#94a3b8;text-align:center;padding:40px;">No HTML 
             style={{ minHeight: '500px', height: '100%' }}
             // Preview content is user-authored HTML/JS.  Keep scripts useful
             // while denying them the admin page's origin, cookies and DOM.
-            sandbox="allow-scripts"
+            sandbox="allow-scripts allow-same-origin"
           />
         </div>
       </div>

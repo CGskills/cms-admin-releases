@@ -5,6 +5,7 @@ import CodeBlockList from './_components/CodeBlockList';
 import ImportPreviewButton from './_components/ImportPreviewButton';
 import DeleteAllButton from './_components/DeleteAllButton';
 import type { CodeBlock } from '@/types/code-blocks';
+import { normalizeCodeBlock } from '@/lib/code-blocks/normalize';
 
 function getSupabaseSqlEditorUrl(): string {
   const configuredUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -152,7 +153,7 @@ CREATE POLICY "No anonymous code_blocks access"
           </Link>
         </div>
       ) : !error && blocks ? (
-        <CodeBlockList initialBlocks={blocks as CodeBlock[]} />
+        <CodeBlockList initialBlocks={blocks.map(normalizeCodeBlock).filter((block): block is CodeBlock => block !== null)} />
       ) : null}
     </>
   );

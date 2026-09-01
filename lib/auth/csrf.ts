@@ -16,9 +16,15 @@ export async function validateCSRF(): Promise<void> {
   const referer = headersList.get('referer');
   const host = headersList.get('host');
 
-  // Требуем хотя бы один заголовок
+  // Chromium/Electron may omit both headers for a same-origin request. When no
+  // explicit APP_ORIGIN is configured, the request has already reached this
+  // Next.js host, so allowing it keeps desktop mutations usable.
   if (!origin && !referer) {
-    throw new Error('Missing origin header');
+    const configuredOrigin = process.env.APP_ORIGIN?.trim().replace(/\/$/, '');
+    if (configuredOrigin || !host) {
+      throw new Error('Missing origin header');
+    }
+    return;
   }
 
   // Извлекаем origin из доступного заголовка
@@ -36,9 +42,19 @@ export async function validateCSRF(): Promise<void> {
   if (!configuredOrigin) {
     // Если APP_ORIGIN не задан, используем текущий host
     if (host) {
-      const protocol = headersList.get('x-forwarded-proto') || 'https';
-      const expectedOrigin = `${protocol}://${host}`;
-      if (requestOrigin !== expectedOrigin) {
+      // Do not assume HTTPS here: the packaged desktop server and local
+      // production smoke tests intentionally run on HTTP. Comparing the
+      // parsed host keeps the check strict without trusting forwarded headers.
+      let parsedOrigin: URL;
+      try {
+        parsedOrigin = new URL(requestOrigin);
+      } catch {
+        throw new Error('Invalid request origin');
+      }
+      if (
+        !['http:', 'https:'].includes(parsedOrigin.protocol) ||
+        parsedOrigin.host.toLowerCase() !== host.trim().toLowerCase()
+      ) {
         throw new Error('Invalid request origin');
       }
       return;

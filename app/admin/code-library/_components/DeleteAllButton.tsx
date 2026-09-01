@@ -1,8 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { fetchJson } from '@/lib/http/fetch-json';
+import { useRouter } from 'next/navigation';
 
 export default function DeleteAllButton() {
+  const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [result, setResult] = useState<string | null>(null);
@@ -12,14 +15,17 @@ export default function DeleteAllButton() {
     setResult(null);
 
     try {
-      const res = await fetch('/api/delete-all-code-blocks', { method: 'POST' });
-      const data = await res.json();
+      const { response: res, data } = await fetchJson<{ error?: string; deleted?: number }>(
+        '/api/delete-all-code-blocks',
+        { method: 'POST' },
+      );
 
       if (!res.ok) {
-        setResult(`Ошибка: ${data.error}`);
+        setResult(`Ошибка: ${data.error || `HTTP ${res.status}`}`);
       } else {
         setResult(`Удалено: ${data.deleted} блоков`);
         window.dispatchEvent(new Event('code-blocks:deleted-all'));
+        router.refresh();
       }
     } catch {
       setResult('Ошибка сети');

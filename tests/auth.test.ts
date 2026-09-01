@@ -15,6 +15,13 @@ describe('admin auth boundaries', () => {
     expect(isTrustedMutationOrigin(new Request('https://admin.example.com/api/x', { headers: { origin: 'https://evil.example.com' } }))).toBe(false);
     expect(isTrustedMutationOrigin(new Request('https://admin.example.com/api/x'))).toBe(false);
   });
+  it('accepts same-host desktop requests without Origin and rejects missing Host', () => {
+    delete process.env.APP_ORIGIN;
+    expect(isTrustedMutationOrigin(new Request('http://127.0.0.1:43123/api/x', {
+      headers: { host: '127.0.0.1:43123' },
+    }))).toBe(true);
+    expect(isTrustedMutationOrigin(new Request('http://127.0.0.1:43123/api/x'))).toBe(false);
+  });
   it('returns 405 with POST allow header', () => {
     const response = methodNotAllowed();
     expect(response.status).toBe(405);

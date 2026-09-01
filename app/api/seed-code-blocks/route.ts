@@ -4,6 +4,8 @@ import { requireAdminApi } from '@/lib/auth/api';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
+export const runtime = 'nodejs';
+
 export async function POST(request: Request) {
   const denied = await requireAdminApi(request); if (denied) return denied;
   const supabase = await createClient();
@@ -27,12 +29,6 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
-
-  // Delete all existing blocks first (idempotent)
-  await supabase
-    .from('code_blocks')
-    .delete()
-    .neq('id', '00000000-0000-0000-0000-000000000000');
 
   const previewDir = join(process.cwd(), 'preview');
 
@@ -63,7 +59,10 @@ export async function POST(request: Request) {
     },
   ];
 
-  const results = [];
+  // Read and validate every source before touching the database. This keeps a
+  // missing/broken preview file from deleting a user's existing library.
+  const rows: Array<Record<string, unknown>> = [];
+  const results: Array<Record<string, unknown>> = [];
 
   for (const block of blocks) {
     try {
@@ -90,8 +89,8 @@ export async function POST(request: Request) {
         }
       }
 
-      // Store ENTIRE file as-is in html field — no splitting
-      const { data: inserted, error } = await supabase.from('code_blocks').insert({
+      // Store the ENTIRE file as-is in html — no lossy HTML/CSS/JS splitting.
+      rows.push({
         name: block.name,
         description: block.description,
         category: block.category,
@@ -101,21 +100,8 @@ export async function POST(request: Request) {
         version: '1.0.0',
         status: 'ready',
         dependencies: deps,
-      }).select('id, html').single();
-
-      if (error) {
-        results.push({ name: block.name, error: error.message });
-      } else {
-        const storedLen = (inserted?.html || '').length;
-        const sourceLen = rawContent.length;
-        results.push({
-          name: block.name,
-          success: true,
-          sourceBytes: sourceLen,
-          storedChars: storedLen,
-          match: storedLen === sourceLen ? 'OK' : `MISMATCH`,
-        });
-      }
+      });
+      results.push({ name: block.name, sourceBytes: rawContent.length });
     } catch (e) {
       results.push({
         name: block.name,
@@ -124,5 +110,51 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json({ results });
+  const sourceErrors = results.filter((result) => result.error);
+  if (sourceErrors.length) {
+    return NextResponse.json({ results: sourceErrors }, { status: 400 });
+  }
+
+  const { data: existing, error: existingError } = await supabase
+    .from('code_blocks')
+    .select('id');
+  if (existingError) {
+    return NextResponse.json({ error: existingError.message }, { status: 500 });
+  }
+
+  // Insert all rows in one statement. PostgreSQL applies the statement
+  // atomically, so a validation/RLS error cannot leave a half-imported set.
+  const { data: inserted, error: insertError } = await supabase
+    .from('code_blocks')
+    .insert(rows)
+    .select('id, html');
+  if (insertError || !inserted || inserted.length !== rows.length) {
+    return NextResponse.json(
+      { error: insertError?.message || 'Import did not create all code blocks' },
+      { status: 500 },
+    );
+  }
+
+  const cleanupIds = (existing || []).map((row) => row.id).filter(Boolean);
+  let cleanupWarning: string | undefined;
+  if (cleanupIds.length) {
+    const { error: cleanupError } = await supabase
+      .from('code_blocks')
+      .delete()
+      .in('id', cleanupIds);
+    if (cleanupError) cleanupWarning = cleanupError.message;
+  }
+
+  const finalResults = results.map((result, index) => {
+    const storedChars = typeof inserted[index]?.html === 'string' ? inserted[index].html.length : 0;
+    const sourceBytes = typeof result.sourceBytes === 'number' ? result.sourceBytes : 0;
+    return {
+      ...result,
+      success: true,
+      storedChars,
+      match: storedChars === sourceBytes ? 'OK' : 'MISMATCH',
+    };
+  });
+
+  return NextResponse.json({ results: finalResults, ...(cleanupWarning ? { warning: cleanupWarning } : {}) });
 }

@@ -1,10 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = 'https://pjujhrfkykxgzcexyyti.supabase.co';
-const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBqdWpocmZreWt4Z3pjZXh5eXRpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjY1NjExNywiZXhwIjoyMTAyMjMyMTE3fQ.HwpQuze5kwc2sDUZnvfWeiYuv5v7tI2RTFVy9l2xeXs';
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
+if (!SERVICE_ROLE_KEY) throw new Error('SUPABASE_SERVICE_ROLE_KEY is required');
+// Keep the value narrowed for TypeScript versions used by Next's build worker.
+const serviceRoleKey: string = SERVICE_ROLE_KEY;
 
 async function addAdminUser() {
-  const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+  const supabase = createClient(SUPABASE_URL, serviceRoleKey);
 
   console.log('🔧 Adding admin@gmail.com to admin_users table...\n');
 

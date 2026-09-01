@@ -24,10 +24,15 @@ const nextConfig: NextConfig = {
     const isDevelopment = process.env.NODE_ENV === "development";
     const contentSecurityPolicy = [
       "default-src 'self'",
-      `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""}`,
-      "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https://*.supabase.co",
-      "font-src 'self' data:",
+      // Code Library previews run user-authored documents in a sandboxed
+      // iframe.  The bundled blocks use jsDelivr for Supabase/@fontsource,
+      // Google Fonts for typography, and Postimages for review QR images.
+      // Keep the allow-list explicit; the sandbox still denies access to the
+      // admin document, cookies, and storage.
+      `script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net${isDevelopment ? " 'unsafe-eval'" : ""}`,
+      "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com",
+      "img-src 'self' data: blob: https://*.supabase.co https://i.postimg.cc",
+      "font-src 'self' data: https://fonts.gstatic.com",
       "worker-src 'self' blob:",
       `connect-src 'self' https://*.supabase.co wss://*.supabase.co${isDevelopment ? " ws: http://localhost:*" : ""}`,
       "frame-ancestors 'none'",

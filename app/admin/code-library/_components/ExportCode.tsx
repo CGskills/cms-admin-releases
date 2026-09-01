@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import type { CodeBlockDependency } from '@/types/code-blocks';
+import { buildExportCode, isFullDocument } from '@/lib/code-blocks/export';
 
 interface ExportCodeProps {
   html: string;
@@ -9,75 +10,6 @@ interface ExportCodeProps {
   javascript: string;
   dependencies: CodeBlockDependency[];
   blockName: string;
-}
-
-function isFullDocument(html: string): boolean {
-  return html.includes('<!DOCTYPE') || html.includes('<html');
-}
-
-function buildFragmentExport(
-  htmlCode: string,
-  cssCode: string,
-  jsCode: string,
-  dependencies: CodeBlockDependency[],
-  namespace: string
-): string {
-  // Wrap CSS selectors in namespace (skip globals like *, body, html, @-rules)
-  const wrappedCss = cssCode
-    ? cssCode.replace(/([^{}@][^{}]*?)\s*\{/g, (match, selectors) => {
-        if (selectors.trim().startsWith('@')) return match;
-        const wrapped = selectors
-          .split(',')
-          .map((s: string) => {
-            const trimmed = s.trim();
-            if (!trimmed || trimmed.startsWith('@')) return trimmed;
-            // Skip global selectors
-            if (trimmed === '*' || trimmed === 'body' || trimmed === 'html') return trimmed;
-            if (trimmed.startsWith('.') || trimmed.startsWith('#') || trimmed.startsWith('[') || trimmed.startsWith(':')) {
-              return `.${namespace} ${trimmed}`;
-            }
-            if (/^[a-z]/i.test(trimmed)) {
-              return `.${namespace} ${trimmed}`;
-            }
-            return trimmed;
-          })
-          .join(', ');
-        return `${wrapped} {`;
-      })
-    : '';
-
-  // Wrap JS in IIFE
-  const wrappedJs = jsCode
-    ? `<script>
-(function() {
-  ${jsCode}
-})();
-</script>`
-    : '';
-
-  // CDN dependencies
-  const depScripts = dependencies
-    .filter((d) => d.cdnUrl)
-    .map((d) => `<script src="${d.cdnUrl}"></script>`)
-    .join('\n');
-
-  const parts: string[] = [];
-
-  if (depScripts) {
-    parts.push(depScripts);
-  }
-
-  if (wrappedCss) {
-    parts.push(`<style>\n${wrappedCss}\n</style>`);
-  }
-
-  parts.push(`<div class="${namespace}">\n${htmlCode}\n</div>`);
-
-  if (wrappedJs) {
-    parts.push(wrappedJs);
-  }
-
-  return parts.join('\n\n');
 }
 
 export default function ExportCode({
@@ -92,26 +24,10 @@ export default function ExportCode({
 
   const isFullDoc = useMemo(() => isFullDocument(htmlCode), [htmlCode]);
 
-  const namespace = useMemo(() => {
-    const slug = blockName
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
-      .slice(0, 20) || 'block';
-    return `tilda-${slug}`;
-  }, [blockName]);
-
-  const exportCode = useMemo(() => {
-    // If css/js fields are empty and html contains style/script tags,
-    // it's a full block (imported) — output as-is
-    const isFullBlock = !cssCode && !jsCode &&
-      (htmlCode.includes('<style') || htmlCode.includes('<script'));
-
-    if (isFullBlock || isFullDoc) {
-      return htmlCode;
-    }
-    return buildFragmentExport(htmlCode, cssCode, jsCode, dependencies, namespace);
-  }, [isFullDoc, htmlCode, cssCode, jsCode, dependencies, namespace]);
+  const exportCode = useMemo(
+    () => buildExportCode(htmlCode, cssCode, jsCode, dependencies, blockName),
+    [htmlCode, cssCode, jsCode, dependencies, blockName],
+  );
 
   const handleCopy = useCallback(async () => {
     try {
@@ -125,8 +41,14 @@ export default function ExportCode({
       textarea.style.opacity = '0';
       document.body.appendChild(textarea);
       textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
+      try {
+        if (!document.execCommand('copy')) throw new Error('copy failed');
+      } catch {
+        alert('Не удалось скопировать код. Выделите его вручную в окне Export.');
+        return;
+      } finally {
+        textarea.remove();
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }

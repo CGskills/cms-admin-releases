@@ -1,7 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = 'https://pjujhrfkykxgzcexyyti.supabase.co';
-const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBqdWpocmZreWt4Z3pjZXh5eXRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2NTYxMTcsImV4cCI6MjEwMjIzMjExN30.QcNW_hGRmLCDxGJIAKkMlAKXJxF1tjjYSDKMZ1MtTyw';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? '';
+if (!SUPABASE_URL) throw new Error('NEXT_PUBLIC_SUPABASE_URL is required');
+if (!ANON_KEY) throw new Error('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY is required');
 
 console.log('🔍 ТЕСТ AUTHENTICATED ДОСТУПА К CODE_BLOCKS\n');
 console.log('='.repeat(60));
