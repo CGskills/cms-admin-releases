@@ -17,6 +17,8 @@
     "desktop:dist:win": "npm run build && npm run desktop:prepare && electron-builder --win",
     "desktop:dist:mac": "npm run build && npm run desktop:prepare && electron-builder --mac",
     "desktop:release:win": "npm run build && npm run desktop:prepare && electron-builder --win --publish always",
+    "clear-cache": "tsx scripts/clear-electron-cache.ts",
+    "diagnose": "tsx scripts/full-diagnostic.ts",
     "health-check": "node health-check.ts",
     "lint": "eslint",
     "test": "vitest run --config vitest.config.mjs"
