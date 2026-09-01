@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { NextResponse } from 'next/server';
 import { requireAdminApi } from '@/lib/auth/api';
 import { readFileSync } from 'fs';
@@ -9,15 +9,9 @@ export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
   const denied = await requireAdminApi(request); if (denied) return denied;
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  // Admin client bypasses RLS - no auth check needed
 
   const { error: checkError } = await supabase
     .from('code_blocks')
