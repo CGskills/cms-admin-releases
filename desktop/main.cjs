@@ -22,6 +22,13 @@ let isQuitting = false;
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = true;
 
+// Set feed URL to public cms-admin-releases repository
+autoUpdater.setFeedURL({
+  provider: 'github',
+  owner: 'CGskills',
+  repo: 'cms-admin-releases',
+});
+
 // Configure update logger with better error handling
 const setupUpdateLogger = () => {
   try {
