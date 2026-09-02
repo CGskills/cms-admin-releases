@@ -2,13 +2,12 @@
 
 import { useState, useRef, useEffect } from 'react';
 import type { CodeBlockDependency } from '@/types/code-blocks';
-import { buildCodeBlock } from '@/lib/code-library/builder';
-import type { Dependency } from '@/lib/code-library/types';
+import { buildFullDocument, dependenciesToTags } from '@/lib/code-library';
 
 interface CodePreviewProps {
-  html: string;
-  css: string;
-  javascript: string;
+  htmlCode: string;
+  cssCode: string;
+  javascriptCode: string;
   dependencies?: CodeBlockDependency[];
 }
 
@@ -27,20 +26,12 @@ const BREAKPOINTS = [
 
 const PREVIEW_TIMEOUT = 10000; // 10 seconds
 
-export default function CodePreview({ html: htmlCode, css: cssCode, javascript: jsCode, dependencies = [] }: CodePreviewProps) {
+export default function CodePreview({ htmlCode, cssCode, javascriptCode, dependencies = [] }: CodePreviewProps) {
   const [activeBreakpoint, setActiveBreakpoint] = useState(1440);
   const [previewState, setPreviewState] = useState<PreviewState>('loading');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Infer dependency type from URL
-  const inferDependencyType = (url: string): 'css' | 'js' | 'font' | 'unknown' => {
-    if (url.includes('fonts.googleapis.com') || url.includes('fonts.gstatic.com')) return 'font';
-    if (url.endsWith('.css')) return 'css';
-    if (url.endsWith('.js')) return 'js';
-    return 'unknown';
-  };
 
   // Handle iframe load success
   const handleIframeLoad = () => {
@@ -102,22 +93,15 @@ export default function CodePreview({ html: htmlCode, css: cssCode, javascript: 
     }, PREVIEW_TIMEOUT);
 
     try {
-      // Convert dependencies
-      const builderDeps: Dependency[] = dependencies
-        .filter(d => d.cdnUrl)
-        .map(d => ({
-          name: d.name,
-          cdnUrl: d.cdnUrl!,
-          type: inferDependencyType(d.cdnUrl!)
-        }));
+      // Convert dependencies to link/script tags using shared utility
+      const dependencyTags = dependenciesToTags(dependencies);
 
-      // Build preview HTML using the builder
-      const previewHtml = buildCodeBlock({
+      // Build preview HTML using buildFullDocument with CURRENT form values
+      const previewHtml = buildFullDocument({
         html: htmlCode,
         css: cssCode,
-        javascript: jsCode,
-        dependencies: builderDeps,
-        format: 'full'
+        javascript: javascriptCode,
+        dependencies: dependencyTags
       });
 
       // Inject error handler into the preview
@@ -162,7 +146,7 @@ export default function CodePreview({ html: htmlCode, css: cssCode, javascript: 
         timeoutRef.current = null;
       }
     };
-  }, [htmlCode, cssCode, jsCode, dependencies]);
+  }, [htmlCode, cssCode, javascriptCode, dependencies]);
 
   return (
     <div>

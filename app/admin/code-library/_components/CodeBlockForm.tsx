@@ -317,7 +317,7 @@ export default function CodeBlockForm({ codeBlock }: CodeBlockFormProps) {
 
           {/* Preview tab */}
           {activeMainTab === 'preview' && (
-            <CodePreview html={html} css={css} javascript={javascript} dependencies={dependencies} />
+            <CodePreview htmlCode={html} cssCode={css} javascriptCode={javascript} dependencies={dependencies} />
           )}
 
           {/* Validation tab */}

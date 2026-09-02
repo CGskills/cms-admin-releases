@@ -2,8 +2,8 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import type { CodeBlockDependency } from '@/types/code-blocks';
-import { buildCodeBlock, generateNamespace } from '@/lib/code-library';
-import type { Dependency } from '@/lib/code-library';
+import { buildFullDocument, dependenciesToTags, applyNamespace } from '@/lib/code-library';
+import { generateNamespace } from '@/lib/code-library/namespace';
 
 interface ExportCodeProps {
   html: string;
@@ -28,21 +28,9 @@ export default function ExportCode({
   const [showExport, setShowExport] = useState(false);
   const [exportFormat, setExportFormat] = useState<ExportFormat>('full');
 
-  // Convert CodeBlockDependency to builder Dependency format
-  const convertedDeps = useMemo((): Dependency[] => {
-    // Infer dependency type from URL
-    const inferDependencyType = (url: string): 'css' | 'js' | 'font' | 'unknown' => {
-      if (url.includes('fonts.googleapis.com') || url.includes('fonts.gstatic.com')) return 'font';
-      if (url.endsWith('.css')) return 'css';
-      if (url.endsWith('.js')) return 'js';
-      return 'unknown';
-    };
-
-    return dependencies.map(dep => ({
-      name: dep.name,
-      cdnUrl: dep.cdnUrl || '',
-      type: inferDependencyType(dep.cdnUrl || '')
-    }));
+  // Convert CodeBlockDependency to HTML tags using shared utility
+  const dependencyTags = useMemo(() => {
+    return dependenciesToTags(dependencies);
   }, [dependencies]);
 
   // Generate stable namespace for Tilda format
@@ -50,17 +38,29 @@ export default function ExportCode({
     return blockId ? generateNamespace(blockId) : generateNamespace(blockName);
   }, [blockId, blockName]);
 
-  // Build export code using unified builder
+  // Build export code using buildFullDocument (same as Preview and Copy)
   const exportCode = useMemo(() => {
-    return buildCodeBlock({
-      html: htmlCode,
-      css: cssCode,
-      javascript: jsCode,
-      dependencies: convertedDeps,
-      format: exportFormat,
-      namespace: exportFormat === 'tilda-fragment' ? namespace : undefined
-    });
-  }, [htmlCode, cssCode, jsCode, convertedDeps, exportFormat, namespace]);
+    if (exportFormat === 'tilda-fragment') {
+      // For Tilda: namespace CSS and wrap HTML in container
+      const namespacedCss = applyNamespace(cssCode, namespace);
+      const wrappedHtml = `<div id="${namespace}">\n${htmlCode}\n</div>`;
+
+      return buildFullDocument({
+        html: wrappedHtml,
+        css: namespacedCss,
+        javascript: jsCode,
+        dependencies: dependencyTags
+      });
+    } else {
+      // For full HTML: use buildFullDocument directly (matches Preview and Copy)
+      return buildFullDocument({
+        html: htmlCode,
+        css: cssCode,
+        javascript: jsCode,
+        dependencies: dependencyTags
+      });
+    }
+  }, [htmlCode, cssCode, jsCode, dependencyTags, exportFormat, namespace]);
 
   const handleCopy = useCallback(async () => {
     try {

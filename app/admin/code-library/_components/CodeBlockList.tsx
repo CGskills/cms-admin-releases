@@ -10,8 +10,7 @@ import {
   type CodeBlock,
   type CodeBlockCategory,
 } from '@/types/code-blocks';
-import { buildCodeBlock } from '@/lib/code-library';
-import type { Dependency } from '@/lib/code-library';
+import { buildFullDocument, dependenciesToTags } from '@/lib/code-library';
 
 interface CodeBlockListProps {
   initialBlocks: CodeBlock[];
@@ -74,28 +73,15 @@ export default function CodeBlockList({ initialBlocks }: CodeBlockListProps) {
   };
 
   const handleCopyCode = async (block: CodeBlock) => {
-    // Infer dependency type from URL
-    const inferDependencyType = (url: string): 'css' | 'js' | 'font' | 'unknown' => {
-      if (url.includes('fonts.googleapis.com') || url.includes('fonts.gstatic.com')) return 'font';
-      if (url.endsWith('.css')) return 'css';
-      if (url.endsWith('.js')) return 'js';
-      return 'unknown';
-    };
+    // Convert dependencies to HTML tags using shared utility
+    const dependencyTags = dependenciesToTags(block.dependencies || []);
 
-    // Convert CodeBlockDependency to builder Dependency format
-    const convertedDeps: Dependency[] = (block.dependencies || []).map(dep => ({
-      name: dep.name,
-      cdnUrl: dep.cdnUrl || '',
-      type: inferDependencyType(dep.cdnUrl || '')
-    }));
-
-    // Use unified builder with full document format
-    const codeToCopy = buildCodeBlock({
+    // Use buildFullDocument from builder
+    const codeToCopy = buildFullDocument({
       html: block.html,
       css: block.css,
       javascript: block.javascript,
-      dependencies: convertedDeps,
-      format: 'full'
+      dependencies: dependencyTags
     });
 
     try {
