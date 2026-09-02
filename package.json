@@ -21,6 +21,7 @@
     "diagnose": "tsx scripts/full-diagnostic.ts",
     "check-admin": "tsx scripts/check-admin-status.ts",
     "verify-code": "tsx scripts/verify-complete-code.ts",
+    "test-code-library": "tsx scripts/test-code-library.ts",
     "health-check": "node health-check.ts",
     "lint": "eslint",
     "test": "vitest run --config vitest.config.mjs"

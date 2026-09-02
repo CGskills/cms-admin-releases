@@ -25,7 +25,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const previewDir = join(process.cwd(), 'preview');
+  // Support custom preview directory for production deployments
+  const previewDir = process.env.PREVIEW_DIR || join(process.cwd(), 'preview');
 
   const blocks = [
     {
@@ -83,11 +84,11 @@ export async function POST(request: Request) {
       const { html, css, javascript, dependencies } = parseCodeBlockSource(rawContent);
 
       // Convert dependencies to the format expected by the database
-      // Note: Dependency from parseCodeBlockSource doesn't have version field
+      // Add version field with default 'latest' for consistency
       const deps = dependencies.map(dep => ({
         name: dep.name || '',
         cdnUrl: dep.cdnUrl,
-        // version field not available in parsed dependencies
+        version: 'latest',
       }));
 
       // Check if block already exists by slug
@@ -164,7 +165,7 @@ export async function POST(request: Request) {
   const errors = results.filter(r => r.error);
   const successes = results.filter(r => !r.error);
 
-  return NextResponse.json({
+  const response = {
     results,
     summary: {
       total: blocks.length,
@@ -173,5 +174,12 @@ export async function POST(request: Request) {
       created: successes.filter(r => r.action === 'created').length,
       updated: successes.filter(r => r.action === 'updated').length,
     },
-  });
+  };
+
+  // Return appropriate status code
+  if (errors.length > 0 && successes.length === 0) {
+    return NextResponse.json({ error: 'Все импорты завершились с ошибками', ...response }, { status: 500 });
+  }
+
+  return NextResponse.json(response);
 }

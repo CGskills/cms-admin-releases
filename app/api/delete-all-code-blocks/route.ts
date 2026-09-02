@@ -1,18 +1,12 @@
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { NextResponse } from 'next/server';
 import { requireAdminApi } from '@/lib/auth/api';
 
 export async function POST(request: Request) {
   const denied = await requireAdminApi(request); if (denied) return denied;
-  const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  // Use admin client to bypass RLS
+  const supabase = createAdminClient();
 
   const { count, error } = await supabase
     .from('code_blocks')

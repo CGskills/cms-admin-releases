@@ -8,6 +8,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
   const queryError = useSyncExternalStore(
     (onStoreChange) => {
       window.addEventListener('popstate', onStoreChange);
@@ -16,6 +17,7 @@ export default function LoginPage() {
     () => new URLSearchParams(window.location.search).get('error') || '',
     () => '',
   );
+
   const forbiddenError = queryError === 'forbidden'
     ? 'У аккаунта нет прав администратора. Проверьте ADMIN_EMAILS.'
     : '';
@@ -23,21 +25,30 @@ export default function LoginPage() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
+
     if (queryError) {
       window.history.replaceState(null, '', '/admin/login');
       window.dispatchEvent(new PopStateEvent('popstate'));
     }
+
+    // Basic validation
+    if (!email || !password) {
+      setError('Введите email и пароль');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const supabase = createClient();
 
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       });
 
       if (signInError) {
+        console.error('Login error:', signInError);
         if (signInError.message.includes('Invalid login credentials')) {
           setError('Неверный email или пароль');
         } else if (signInError.message.includes('Email not confirmed')) {
@@ -50,15 +61,19 @@ export default function LoginPage() {
       }
 
       if (data.user) {
-        // Supabase persists the session in browser cookies asynchronously. A
-        // full navigation ensures the first request to the protected route
-        // carries the freshly written session cookie to the server proxy.
+        // Supabase persists the session in browser cookies asynchronously
+        // Wait briefly to ensure cookies are written
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Full navigation ensures the first request to the protected route
+        // carries the freshly written session cookie to the server proxy
         window.location.replace('/admin');
       } else {
         setError('Не удалось получить сессию. Попробуйте снова.');
         setIsLoading(false);
       }
-    } catch {
+    } catch (err) {
+      console.error('Unexpected error:', err);
       setError('Произошла непредвиденная ошибка. Попробуйте снова.');
       setIsLoading(false);
     }

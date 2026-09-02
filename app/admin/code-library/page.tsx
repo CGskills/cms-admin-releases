@@ -1,9 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
-import Link from 'next/link';
-import Button from '@/components/ui/Button';
 import CodeBlockList from './_components/CodeBlockList';
-import ImportPreviewButton from './_components/ImportPreviewButton';
-import DeleteAllButton from './_components/DeleteAllButton';
+import { CodeLibraryActions } from './_components/CodeLibraryActions';
 import type { CodeBlock } from '@/types/code-blocks';
 import { normalizeCodeBlock } from '@/lib/code-blocks/normalize';
 
@@ -46,20 +43,7 @@ export default async function CodeLibraryPage() {
           <h1 className="text-3xl font-bold text-white mb-2">Code Library</h1>
           <p className="text-slate-400">Создавайте и управляйте кодовыми блоками для Tilda</p>
         </div>
-        {!isTableMissing && !error && (
-          <div className="flex gap-3">
-            <DeleteAllButton />
-            <ImportPreviewButton />
-            <Link href="/admin/code-library/new">
-              <Button>
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Новый блок
-              </Button>
-            </Link>
-          </div>
-        )}
+        {!isTableMissing && !error && <CodeLibraryActions />}
       </div>
 
       {isTableMissing && (
@@ -146,11 +130,8 @@ CREATE POLICY "No anonymous code_blocks access"
           </div>
           <h3 className="text-xl font-bold text-white mb-2">Нет кодовых блоков</h3>
           <p className="text-slate-400 mb-6">
-            Создайте первый блок кода для вставки в Tilda
+            Создайте первый блок кода для вставки в Tilda или импортируйте примеры
           </p>
-          <Link href="/admin/code-library/new">
-            <Button>Создать первый блок</Button>
-          </Link>
         </div>
       ) : !error && blocks ? (
         <CodeBlockList initialBlocks={blocks.map(normalizeCodeBlock).filter((block): block is CodeBlock => block !== null)} />
