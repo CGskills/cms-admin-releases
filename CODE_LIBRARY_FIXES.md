@@ -270,23 +270,52 @@ ADMIN_EMAILS=admin@cgskills.com,manager@cgskills.com
 
 ## Проблемы с входом в v0.2.8
 
-**Возможные причины:**
+**✅ ИСПРАВЛЕНО:** AuthApiError: Invalid API key
 
-1. **Неверные переменные окружения**
-   - Проверьте `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-   - Проверьте `APP_ORIGIN` соответствует реальному URL
+### Основная проблема
+Next.js 15 с `output: "standalone"` не встраивает автоматически `NEXT_PUBLIC_*` переменные в клиентский bundle. Браузер не мог получить доступ к Supabase credentials.
 
-2. **Email не в списке ADMIN_EMAILS**
+### Решение
+**Файл:** [`next.config.ts`](next.config.ts:10)
+
+Добавлена секция `env` для явной передачи переменных:
+```typescript
+env: {
+  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+}
+```
+
+**Файл:** [`lib/supabase/client.ts`](lib/supabase/client.ts:5)
+
+Добавлена валидация с понятным сообщением об ошибке:
+```typescript
+if (!url || !key) {
+  throw new Error('Missing Supabase environment variables...');
+}
+```
+
+### Диагностика
+Создана тестовая страница: http://localhost:3000/test-env
+
+Показывает какие переменные загружены в браузере.
+
+---
+
+**Другие возможные причины проблем с входом:**
+
+1. **Email не в списке ADMIN_EMAILS**
    - После входа проверяется `is_admin()` функция
    - Если email не в списке, редирект на `/admin/login?error=forbidden`
 
-3. **Проблемы с cookies**
+2. **Проблемы с cookies**
    - Проверьте, что домен правильно настроен
    - SameSite политика может блокировать cookies
 
-4. **Версия релиза**
-   - Убедитесь, что v0.2.8 содержит все эти исправления
-   - Проверьте коммит: `5252446 Release v0.2.8`
+3. **Неверный APP_ORIGIN**
+   - Должен точно соответствовать URL приложения
+   - Для dev: `http://localhost:3000`
+   - Для production: `https://admin.cgskills.com`
 
 ---
 
