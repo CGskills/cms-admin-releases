@@ -6,6 +6,13 @@ const nextConfig: NextConfig = {
   // not need Node.js installed on their machine.
   output: "standalone",
 
+  // Explicitly pass NEXT_PUBLIC_ env vars to the client bundle.
+  // Required when using output: "standalone" in Next.js 15.
+  env: {
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  },
+
   // Image server actions receive multipart/form-data. Next.js defaults to a
   // 1 MB action body limit, which rejects otherwise valid CMS image uploads.
   // Keep the limit bounded while allowing the documented 10 MB image cap and
