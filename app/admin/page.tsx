@@ -3,12 +3,12 @@ import Link from 'next/link';
 
 const accentClasses = {
   AF5D3E: {
-    iconBackground: 'bg-[#AF5D3E]/10 group-hover:bg-[#AF5D3E]/20',
-    iconText: 'text-[#AF5D3E]',
+    iconBackground: 'bg-accent-primary/10 group-hover:bg-accent-primary/20',
+    iconText: 'text-accent-primary',
   },
   DB9844: {
-    iconBackground: 'bg-[#DB9844]/10 group-hover:bg-[#DB9844]/20',
-    iconText: 'text-[#DB9844]',
+    iconBackground: 'bg-accent-secondary/10 group-hover:bg-accent-secondary/20',
+    iconText: 'text-accent-secondary',
   },
 } as const;
 
@@ -17,13 +17,14 @@ type AccentColor = keyof typeof accentClasses;
 export default async function AdminDashboard() {
   const supabase = await createClient();
 
-  const [portfolioCount, pricingCount, testimonialsCount, employeesCount, activityResult] =
+  const [portfolioCount, pricingCount, testimonialsCount, employeesCount, activityResult, totalLogsCount] =
     await Promise.all([
       supabase.from('portfolio_items').select('*', { count: 'exact', head: true }).eq('visible', true),
       supabase.from('pricing').select('*', { count: 'exact', head: true }).eq('visible', true),
       supabase.from('testimonials').select('*', { count: 'exact', head: true }).eq('published', true),
       supabase.from('employees').select('*', { count: 'exact', head: true }).eq('published', true),
       supabase.from('activity_logs').select('*').order('created_at', { ascending: false }).limit(10),
+      supabase.from('activity_logs').select('*', { count: 'exact', head: true }),
     ]);
 
   const stats = [
@@ -34,6 +35,7 @@ export default async function AdminDashboard() {
   ];
 
   const activityLogs = activityResult.data || [];
+  const totalActivityCount = totalLogsCount.count || 0;
 
   const actionLabels: Record<string, string> = {
     create: 'Создал',
@@ -48,6 +50,7 @@ export default async function AdminDashboard() {
     pricing: 'услугу',
     testimonials: 'отзыв',
     employees: 'сотрудника',
+    code_blocks: 'блок кода',
   };
 
   const quickActions = [
@@ -67,7 +70,7 @@ export default async function AdminDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map((stat) => (
           <Link key={stat.href} href={stat.href}>
-            <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl border border-slate-700/50 p-5 hover:border-[#DB9844]/50 transition-all cursor-pointer group">
+            <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl border border-slate-700/50 p-5 hover:border-accent-secondary/50 transition-all cursor-pointer group">
               <div className="flex items-center justify-between mb-3">
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${accentClasses[stat.color].iconBackground} transition-colors`}>
                   <span className={`${accentClasses[stat.color].iconText} text-lg font-bold`}>{stat.count}</span>
@@ -110,6 +113,11 @@ export default async function AdminDashboard() {
         <div className="lg:col-span-2 bg-slate-800/50 backdrop-blur-xl rounded-xl border border-slate-700/50 p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-white">Последние действия</h2>
+            {totalActivityCount > 10 && (
+              <Link href="/admin/activity" className="text-xs text-[#DB9844] hover:text-[#F59E0B] transition-colors">
+                Показать все ({totalActivityCount})
+              </Link>
+            )}
           </div>
 
           {activityLogs.length === 0 ? (
@@ -129,7 +137,7 @@ export default async function AdminDashboard() {
                     <p className="text-sm text-white">
                       <span className="text-slate-400">{log.user_email?.split('@')[0]}</span>
                       {' '}
-                      <span className="text-[#DB9844]">{actionLabels[log.action] || log.action}</span>
+                      <span className="text-accent-secondary">{actionLabels[log.action] || log.action}</span>
                       {' '}
                       {entityLabels[log.entity_type] || log.entity_type}
                       {log.entity_name && (

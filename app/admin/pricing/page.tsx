@@ -1,4 +1,5 @@
 import SupabasePricingEditor from './_components/SupabasePricingEditor';
+import QueryProvider from './_components/QueryProvider';
 
 export default function PricingPage() {
   return (
@@ -10,7 +11,9 @@ export default function PricingPage() {
         </p>
       </div>
 
-      <SupabasePricingEditor />
+      <QueryProvider>
+        <SupabasePricingEditor />
+      </QueryProvider>
     </>
   );
 }

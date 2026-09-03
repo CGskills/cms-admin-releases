@@ -9,7 +9,7 @@ export default async function PortfolioPage() {
   const { data: projects, error } = await supabase
     .from('portfolio_items')
     .select('*')
-    .order('order_index', { ascending: true });
+    .order('order_index', { ascending: true, nullsFirst: false });
 
   return (
     <>

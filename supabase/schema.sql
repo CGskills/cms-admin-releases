@@ -60,7 +60,8 @@ CREATE TABLE IF NOT EXISTS pricing (
   name TEXT NOT NULL,
   description TEXT NOT NULL,
   price TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Create testimonials table
@@ -298,6 +299,9 @@ CREATE TRIGGER update_pages_updated_at BEFORE UPDATE ON pages
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_portfolio_items_updated_at BEFORE UPDATE ON portfolio_items
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_pricing_updated_at BEFORE UPDATE ON pricing
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_settings_updated_at BEFORE UPDATE ON settings

@@ -14,8 +14,11 @@ COMMENT ON COLUMN pricing.custom_fields IS 'Storage for dynamic column values no
 -- Create index for better performance on custom_fields queries
 CREATE INDEX IF NOT EXISTS idx_pricing_custom_fields ON pricing USING gin(custom_fields);
 
--- Update updated_at on settings when pricing_settings changes
-CREATE OR REPLACE FUNCTION update_settings_updated_at()
+-- Add updated_at column to pricing table to track modifications
+ALTER TABLE pricing ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now();
+
+-- Update updated_at timestamp function
+CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
   NEW.updated_at = NOW();
@@ -23,11 +26,19 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Update updated_at on settings when pricing_settings changes
 DROP TRIGGER IF EXISTS settings_updated_at_trigger ON settings;
 CREATE TRIGGER settings_updated_at_trigger
   BEFORE UPDATE ON settings
   FOR EACH ROW
-  EXECUTE FUNCTION update_settings_updated_at();
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- Update updated_at on pricing table modifications
+DROP TRIGGER IF EXISTS pricing_updated_at_trigger ON pricing;
+CREATE TRIGGER pricing_updated_at_trigger
+  BEFORE UPDATE ON pricing
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
 
 -- Example default pricing_settings structure (for reference)
 -- {

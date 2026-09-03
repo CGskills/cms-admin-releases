@@ -69,7 +69,8 @@ CREATE TABLE IF NOT EXISTS pricing (
   visible BOOLEAN DEFAULT true,
   duration TEXT DEFAULT '',
   features JSONB DEFAULT '[]'::jsonb,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS testimonials (
@@ -126,6 +127,10 @@ DO $$ BEGIN
 
   DROP TRIGGER IF EXISTS update_settings_updated_at ON settings;
   CREATE TRIGGER update_settings_updated_at BEFORE UPDATE ON settings
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+  DROP TRIGGER IF EXISTS update_pricing_updated_at ON pricing;
+  CREATE TRIGGER update_pricing_updated_at BEFORE UPDATE ON pricing
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 END $$;
 

@@ -9,17 +9,26 @@ function getSupabaseSqlEditorUrl(): string {
   if (!configuredUrl) return 'https://supabase.com/dashboard';
 
   try {
-    const hostname = new URL(configuredUrl).hostname;
-    const suffix = '.supabase.co';
-    if (!hostname.endsWith(suffix)) return 'https://supabase.com/dashboard';
+    const url = new URL(configuredUrl);
+    const hostname = url.hostname;
 
-    const projectRef = hostname.slice(0, -suffix.length);
-    if (!projectRef || !/^[a-z0-9-]+$/i.test(projectRef)) {
-      return 'https://supabase.com/dashboard';
+    // Extract project ref from various Supabase URL formats
+    // Handles: projectref.supabase.co, projectref.supabase.net, etc.
+    const supabasePattern = /^(.+?)\.supabase\.(co|net|io)$/i;
+    const match = hostname.match(supabasePattern);
+
+    if (match && match[1]) {
+      const projectRef = match[1];
+      // Basic sanity check: non-empty and URL-safe
+      if (projectRef.length > 0 && projectRef.length < 100) {
+        return `https://supabase.com/dashboard/project/${encodeURIComponent(projectRef)}/sql/new`;
+      }
     }
 
-    return `https://supabase.com/dashboard/project/${encodeURIComponent(projectRef)}/sql/new`;
+    // Fallback to dashboard home if we can't parse the project ref
+    return 'https://supabase.com/dashboard';
   } catch {
+    // If URL parsing fails, return safe fallback
     return 'https://supabase.com/dashboard';
   }
 }
@@ -28,13 +37,34 @@ export default async function CodeLibraryPage() {
   const supabase = await createClient();
   const supabaseSqlEditorUrl = getSupabaseSqlEditorUrl();
 
-  const { data: blocks, error } = await supabase
-    .from('code_blocks')
-    .select('*')
-    .order('updated_at', { ascending: false });
+  const { data: tableCheck } = await supabase
+    .from('information_schema.tables')
+    .select('table_name')
+    .eq('table_schema', 'public')
+    .eq('table_name', 'code_blocks')
+    .single();
 
-  const isTableMissing = error?.message?.includes('Could not find the table') ||
-    error?.message?.includes('does not exist');
+  const isTableMissing = !tableCheck;
+
+  let blocks = null;
+  let error = null;
+  let normalizedBlocks: CodeBlock[] = [];
+  let failedNormalizationCount = 0;
+
+  if (!isTableMissing) {
+    const result = await supabase
+      .from('code_blocks')
+      .select('*')
+      .order('updated_at', { ascending: false });
+    blocks = result.data;
+    error = result.error;
+
+    if (blocks && !error) {
+      const originalCount = blocks.length;
+      normalizedBlocks = blocks.map(normalizeCodeBlock).filter((block): block is CodeBlock => block !== null);
+      failedNormalizationCount = originalCount - normalizedBlocks.length;
+    }
+  }
 
   return (
     <>
@@ -121,6 +151,24 @@ CREATE POLICY "No anonymous code_blocks access"
         </div>
       )}
 
+      {failedNormalizationCount > 0 && (
+        <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-orange-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+              <h3 className="text-orange-400 font-semibold text-sm mb-1">
+                {failedNormalizationCount} {failedNormalizationCount === 1 ? 'блок не загружен' : 'блока не загружены'}
+              </h3>
+              <p className="text-orange-300/80 text-sm">
+                Некоторые блоки не могут быть загружены из-за проблем с данными. Проверьте целостность данных в Supabase.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {!error && (!blocks || blocks.length === 0) ? (
         <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl border border-slate-700/50 p-12 text-center">
           <div className="w-16 h-16 bg-[#DB9844]/10 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -134,7 +182,7 @@ CREATE POLICY "No anonymous code_blocks access"
           </p>
         </div>
       ) : !error && blocks ? (
-        <CodeBlockList initialBlocks={blocks.map(normalizeCodeBlock).filter((block): block is CodeBlock => block !== null)} />
+        <CodeBlockList initialBlocks={normalizedBlocks} />
       ) : null}
     </>
   );

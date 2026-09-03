@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react';
+import { useState, useEffect, useMemo, type ReactNode } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   closestCenter,
   DndContext,
@@ -59,8 +60,8 @@ class FilteredKeyboardSensor extends KeyboardSensor {
       ) => {
         const target = event.target as HTMLElement;
 
-        // DIAGNOSTIC: Log when FilteredKeyboardSensor handler is called
-        if (event.key === ' ') {
+        // DIAGNOSTIC: Log when FilteredKeyboardSensor handler is called (development only)
+        if (process.env.NODE_ENV === 'development' && event.key === ' ') {
           console.log('[FilteredKeyboardSensor] Space key detected', {
             'target.tagName': target.tagName,
             'target.contentEditable': target.contentEditable,
@@ -74,12 +75,16 @@ class FilteredKeyboardSensor extends KeyboardSensor {
           target.tagName === 'TEXTAREA' ||
           target.contentEditable === 'true'
         ) {
-          console.log('[FilteredKeyboardSensor] Filtered out - returning false');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[FilteredKeyboardSensor] Filtered out - returning false');
+          }
           return false;
         }
 
         // Delegate to parent KeyboardSensor activator logic
-        console.log('[FilteredKeyboardSensor] Delegating to parent KeyboardSensor');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[FilteredKeyboardSensor] Delegating to parent KeyboardSensor');
+        }
         return KeyboardSensor.activators[0].handler(event, options, context);
       },
     },
@@ -128,14 +133,13 @@ function SortableCategory({ category, disabled, className, children }: SortableC
 }
 
 export default function SupabasePricingEditor() {
-  const [items, setItems] = useState<PricingItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
   const [expandedSubs, setExpandedSubs] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [ef, setEf] = useState({ name: '', price: '', subtitle: '', subtitleTitle: '', meta: '' });
-  const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [showAdd, setShowAdd] = useState<string | null>(null);
   const [af, setAf] = useState({ name: '', price: '', category: '', subsection: '', slideIndex: 0, subtitle: '', subtitleTitle: '', meta: '' });
   const [renamingCat, setRenamingCat] = useState<string | null>(null);
@@ -146,101 +150,48 @@ export default function SupabasePricingEditor() {
   const [movingId, setMovingId] = useState<string | null>(null);
   const [pendingToggleId, setPendingToggleId] = useState<string | null>(null);
   const [deletingKey, setDeletingKey] = useState<string | null>(null);
-  const [mutationBusy, setMutationBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
-  // Server reads can finish out of order (especially after a slow Storage or
-  // Supabase request). Keep a generation for mutations and a sequence for
-  // reads so an old response cannot overwrite newer optimistic state or call
-  // setState after this editor has unmounted.
-  const mountedRef = useRef(false);
-  const mutationGenerationRef = useRef(0);
-  const fetchSequenceRef = useRef(0);
-  const createInFlightRef = useRef(false);
-  const saveItemInFlightRef = useRef(new Set<string>());
-  const slideMoveInFlightRef = useRef(new Set<string>());
-  const toggleTokensRef = useRef(new Map<string, symbol>());
-  const reorderInFlightRef = useRef(false);
-  const renameInFlightRef = useRef(new Set<string>());
-  const mutationInFlightRef = useRef(false);
+  const [confirmModal, setConfirmModal] = useState<{ message: string; onConfirm: () => void } | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(FilteredKeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const fetchItems = useCallback(async () => {
-    const fetchSequence = ++fetchSequenceRef.current;
-    const mutationGeneration = mutationGenerationRef.current;
+  // React Query: fetch items with automatic caching and race condition handling
+  const { data: items = [], isLoading: loading } = useQuery({
+    queryKey: ['pricingItems'],
+    queryFn: getPricingEditorItems,
+    staleTime: 0,
+  });
 
-    try {
-      const data = await getPricingEditorItems();
-      if (
-        !mountedRef.current
-        || mutationGeneration !== mutationGenerationRef.current
-        || fetchSequence !== fetchSequenceRef.current
-      ) {
-        return false;
-      }
-      setItems(data);
-      return true;
-    } catch (error) {
-      if (
-        mountedRef.current
-        && mutationGeneration === mutationGenerationRef.current
-        && fetchSequence === fetchSequenceRef.current
-      ) {
-        setActionError(`Не удалось загрузить услуги: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`);
-      }
-      return false;
+  // React Query: mutation for all pricing operations
+  const pricingMutation = useMutation({
+    mutationFn: mutatePricingEditorAction,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pricingItems'] });
+    },
+    onError: (error) => {
+      setActionError(`Ошибка: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`);
+    },
+  });
+
+  // Install diagnostics on mount
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      installGlobalDiagnostics();
     }
   }, []);
 
-  const runPricingMutation = useCallback(
-    async (input: Parameters<typeof mutatePricingEditorAction>[0]) => {
-      // Invalidate every read that started before this mutation. The next
-      // explicit fetch (after the mutation resolves) is the only response
-      // allowed to reconcile the editor.
-      mutationGenerationRef.current += 1;
-      return mutatePricingEditorAction(input);
-    },
-    [],
-  );
-
-  const beginMutation = useCallback(() => {
-    if (mutationInFlightRef.current) return false;
-    mutationInFlightRef.current = true;
-    setMutationBusy(true);
-    return true;
-  }, []);
-
-  const finishMutation = useCallback(() => {
-    mutationInFlightRef.current = false;
-    setMutationBusy(false);
-  }, []);
-
+  // Debounce search input with 300ms delay
   useEffect(() => {
-    let isCurrent = true;
-    mountedRef.current = true;
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
 
-    // DIAGNOSTIC: Install global keyboard listeners
-    installGlobalDiagnostics();
-
-    const loadItems = async () => {
-      try {
-        await fetchItems();
-      } finally {
-        if (isCurrent) setLoading(false);
-      }
-    };
-
-    void loadItems();
-    return () => {
-      isCurrent = false;
-      mountedRef.current = false;
-      mutationGenerationRef.current += 1;
-      fetchSequenceRef.current += 1;
-    };
-  }, [fetchItems]);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const grouped = useMemo(() => {
     const g: Grouped = {};
@@ -269,49 +220,32 @@ export default function SupabasePricingEditor() {
   }, [items]);
 
   const persistCategoryOrder = async (categoryOrder: string[], movingCategory: string) => {
-    if (movingId || pendingToggleId || deletingKey || reorderInFlightRef.current || mutationInFlightRef.current) return;
-    if (!beginMutation()) return;
+    if (movingId || pendingToggleId || deletingKey || pricingMutation.isPending) return;
 
-    const previousItems = items;
     const orderedItems = categoryOrder.flatMap((category) =>
-      previousItems
+      items
         .filter((item) => (item.category || UNCATEGORIZED_CATEGORY) === category)
         .sort((first, second) => first.order_index - second.order_index)
     );
     const optimisticItems = orderedItems.map((item, order_index) => ({ ...item, order_index }));
 
     setActionError(null);
-    setItems(optimisticItems);
-    reorderInFlightRef.current = true;
     setMovingId(`cat:${movingCategory}`);
+
+    // Optimistic update
+    queryClient.setQueryData(['pricingItems'], optimisticItems);
+
     try {
-      await runPricingMutation({
+      await pricingMutation.mutateAsync({
         kind: 'reorder',
         items: orderedItems.map((item, order_index) => ({ id: item.id, order_index })),
       });
-      // The optimistic list uses the exact normalized order sent to the
-      // server. Avoid an extra full-table read after a successful reorder;
-      // failed batches still reconcile below.
     } catch (error) {
-      // A batch can partially succeed. Best-effort restore the original
-      // order in Supabase, then always read the server state back. Never
-      // restore a stale local snapshot after a failed compensation.
-      try {
-        await runPricingMutation({
-          kind: 'reorder',
-          items: previousItems.map((item) => ({ id: item.id, order_index: item.order_index })),
-        });
-      } catch {
-        // The guarded reload below is authoritative when compensation fails.
-      }
-      await fetchItems();
       setActionError(
         `Не удалось изменить порядок категорий: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`
       );
     } finally {
-      reorderInFlightRef.current = false;
       setMovingId(null);
-      finishMutation();
     }
   };
 
@@ -360,7 +294,7 @@ export default function SupabasePricingEditor() {
   };
 
   const moveItem = async (item: PricingItem, direction: 'up' | 'down') => {
-    if (movingId || pendingToggleId || deletingKey || reorderInFlightRef.current || mutationInFlightRef.current) return;
+    if (movingId || pendingToggleId || deletingKey || pricingMutation.isPending) return;
 
     const itemSubsection = item.description || DEFAULT_SUBSECTION;
     const itemSlideIndex = pf(item.features).slideIndex;
@@ -376,50 +310,33 @@ export default function SupabasePricingEditor() {
     const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
     if (targetIdx < 0 || targetIdx >= subItems.length) return;
 
-    const previousItems = items;
-    if (!beginMutation()) return;
-    reorderInFlightRef.current = true;
     setMovingId(item.id);
     setActionError(null);
     const a = subItems[idx], b = subItems[targetIdx];
-    const optimisticItems = previousItems
+    const optimisticItems = items
       .map((current) => {
         if (current.id === a.id) return { ...current, order_index: b.order_index };
         if (current.id === b.id) return { ...current, order_index: a.order_index };
         return current;
       })
       .sort((first, second) => first.order_index - second.order_index);
-    setItems(optimisticItems);
+
+    queryClient.setQueryData(['pricingItems'], optimisticItems);
 
     try {
-      await runPricingMutation({
+      await pricingMutation.mutateAsync({
         kind: 'reorder',
         items: [
           { id: a.id, order_index: b.order_index },
           { id: b.id, order_index: a.order_index },
         ],
       });
-      // The two confirmed updates are already represented in optimisticItems.
     } catch (error) {
-      try {
-        await runPricingMutation({
-          kind: 'reorder',
-          items: [
-            { id: a.id, order_index: a.order_index },
-            { id: b.id, order_index: b.order_index },
-          ],
-        });
-      } catch {
-        // The guarded reload below is authoritative when compensation fails.
-      }
-      await fetchItems();
       setActionError(
         `Не удалось изменить порядок услуги: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`
       );
     } finally {
-      reorderInFlightRef.current = false;
       setMovingId(null);
-      finishMutation();
     }
   };
 
@@ -429,6 +346,8 @@ export default function SupabasePricingEditor() {
     if (!beginMutation()) return;
     saveItemInFlightRef.current.add(id);
     setSaving(true);
+    setActionError(null);
+    setRetryAction(null);
     const ex = items.find((i) => i.id === id);
     const feat = ex ? pf(ex.features) : { slideIndex: 0, subtitle: '', subtitleTitle: '', meta: '' };
     feat.subtitle = ef.subtitle; feat.subtitleTitle = ef.subtitleTitle; feat.meta = ef.meta;
@@ -438,6 +357,7 @@ export default function SupabasePricingEditor() {
       await fetchItems();
     } catch (error) {
       setActionError(`Не удалось сохранить услугу: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`);
+      setRetryAction(null);
     } finally {
       saveItemInFlightRef.current.delete(id);
       setSaving(false);
@@ -455,6 +375,7 @@ export default function SupabasePricingEditor() {
     toggleTokensRef.current.set(id, token);
     const nextVisible = !previousVisible;
     setActionError(null);
+    setRetryAction(null);
     setPendingToggleId(id);
     setItems((current) =>
       current.map((item) => (item.id === id ? { ...item, visible: nextVisible } : item))
@@ -472,6 +393,7 @@ export default function SupabasePricingEditor() {
       setActionError(
         `Не удалось изменить видимость услуги: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`
       );
+      setRetryAction(() => () => toggleVis(id));
     } finally {
       if (toggleTokensRef.current.get(id) === token) {
         toggleTokensRef.current.delete(id);
@@ -482,29 +404,40 @@ export default function SupabasePricingEditor() {
   };
   const delItem = async (id: string, name: string) => {
     if (movingId || pendingToggleId || deletingKey || mutationInFlightRef.current) return;
-    if (!confirm(`Удалить "${name}"?`)) return;
-    if (!beginMutation()) return;
-    setActionError(null);
-    setDeletingKey(`item:${id}`);
-    try {
-      await runPricingMutation({ kind: 'deleteItem', id });
-      // Update the local tree only after Supabase confirms the delete. This
-      // keeps failed records visible and removes successful deletes instantly.
-      setItems((current) => current.filter((item) => item.id !== id));
-      await fetchItems();
-    } catch (error) {
-      // A count=0 response can mean another client already deleted the row.
-      // Reconcile on every failure so that stale records are not resurrected;
-      // if the row still exists, the reload keeps it visible.
-      await fetchItems();
-      alert(`Не удалось удалить услугу: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`);
-    } finally {
-      setDeletingKey(null);
-      finishMutation();
-    }
+
+    setConfirmModal({
+      message: `Удалить "${name}"?`,
+      onConfirm: async () => {
+        setConfirmModal(null);
+        if (!beginMutation()) return;
+        setActionError(null);
+        setRetryAction(null);
+        setDeletingKey(`item:${id}`);
+        try {
+          await runPricingMutation({ kind: 'deleteItem', id });
+          // Update the local tree only after Supabase confirms the delete. This
+          // keeps failed records visible and removes successful deletes instantly.
+          setItems((current) => current.filter((item) => item.id !== id));
+          await fetchItems();
+        } catch (error) {
+          // A count=0 response can mean another client already deleted the row.
+          // Reconcile on every failure so that stale records are not resurrected;
+          // if the row still exists, the reload keeps it visible.
+          await fetchItems();
+          setActionError(`Не удалось удалить услугу: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`);
+          setRetryAction(null);
+        } finally {
+          setDeletingKey(null);
+          finishMutation();
+        }
+      }
+    });
   };
   const addItem = async () => {
-    if (!af.name.trim() || !af.category.trim()) { alert('Заполните название и категорию'); return; }
+    if (!af.name.trim() || !af.category.trim()) {
+      setValidationError('Заполните название и категорию');
+      return;
+    }
     if (createInFlightRef.current || mutationInFlightRef.current || !beginMutation()) return;
     createInFlightRef.current = true;
     try {
@@ -521,6 +454,7 @@ export default function SupabasePricingEditor() {
       await fetchItems();
     } catch (error) {
       setActionError(`Не удалось добавить услугу: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`);
+      setRetryAction(null);
     } finally {
       createInFlightRef.current = false;
       finishMutation();
@@ -539,6 +473,7 @@ export default function SupabasePricingEditor() {
       await fetchItems();
     } catch (error) {
       setActionError(`Не удалось переименовать категорию: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`);
+      setRetryAction(null);
     } finally {
       renameInFlightRef.current.delete(renameKey);
       finishMutation();
@@ -546,24 +481,32 @@ export default function SupabasePricingEditor() {
   };
   const delCat = async (c: string) => {
     if (movingId || pendingToggleId || deletingKey || mutationInFlightRef.current) return;
-    if (!confirm(`Удалить "${c}" и все услуги?`)) return;
-    if (!beginMutation()) return;
-    setActionError(null);
-    setDeletingKey(`category:${c}`);
-    try {
-      await runPricingMutation({ kind: 'deleteCategory', category: c });
-      setItems((current) => current.filter((item) => (item.category || UNCATEGORIZED_CATEGORY) !== c));
-      await fetchItems();
-    } catch (error) {
-      // A zero-count response can mean another client already removed the
-      // category. Reconcile on every failure so stale categories are not
-      // left visible in the editor.
-      await fetchItems();
-      alert(`Не удалось удалить категорию: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`);
-    } finally {
-      setDeletingKey(null);
-      finishMutation();
-    }
+
+    setConfirmModal({
+      message: `Удалить "${c}" и все услуги?`,
+      onConfirm: async () => {
+        setConfirmModal(null);
+        if (!beginMutation()) return;
+        setActionError(null);
+        setRetryAction(null);
+        setDeletingKey(`category:${c}`);
+        try {
+          await runPricingMutation({ kind: 'deleteCategory', category: c });
+          setItems((current) => current.filter((item) => (item.category || UNCATEGORIZED_CATEGORY) !== c));
+          await fetchItems();
+        } catch (error) {
+          // A zero-count response can mean another client already removed the
+          // category. Reconcile on every failure so stale categories are not
+          // left visible in the editor.
+          await fetchItems();
+          setActionError(`Не удалось удалить категорию: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`);
+          setRetryAction(null);
+        } finally {
+          setDeletingKey(null);
+          finishMutation();
+        }
+      }
+    });
   };
   const addCat = async () => {
     const category = ncn.trim();
@@ -583,6 +526,7 @@ export default function SupabasePricingEditor() {
       await fetchItems();
     } catch (error) {
       setActionError(`Не удалось создать категорию: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`);
+      setRetryAction(null);
     } finally {
       createInFlightRef.current = false;
       finishMutation();
@@ -600,6 +544,7 @@ export default function SupabasePricingEditor() {
       await fetchItems();
     } catch (error) {
       setActionError(`Не удалось переименовать подраздел: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`);
+      setRetryAction(null);
     } finally {
       renameInFlightRef.current.delete(renameKey);
       finishMutation();
@@ -607,27 +552,34 @@ export default function SupabasePricingEditor() {
   };
   const delSub = async (c: string, s: string) => {
     if (movingId || pendingToggleId || deletingKey || mutationInFlightRef.current) return;
-    if (!confirm(`Удалить "${s}" и все услуги?`)) return;
-    if (!beginMutation()) return;
-    setActionError(null);
-    setDeletingKey(`sub:${c}:${s}`);
-    try {
-      await runPricingMutation({ kind: 'deleteSubsection', category: c, subsection: s });
-      setItems((current) => current.filter((item) => {
-        const category = item.category || UNCATEGORIZED_CATEGORY;
-        const subsection = item.description || DEFAULT_SUBSECTION;
-        return category !== c || subsection !== s;
-      }));
-      await fetchItems();
-    } catch (error) {
-      // Keep the tree authoritative when the server reports count=0 or the
-      // request fails after a remote delete.
-      await fetchItems();
-      alert(`Не удалось удалить подраздел: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`);
-    } finally {
-      setDeletingKey(null);
-      finishMutation();
-    }
+
+    setConfirmModal({
+      message: `Удалить "${s}" и все услуги?`,
+      onConfirm: async () => {
+        setConfirmModal(null);
+        if (!beginMutation()) return;
+        setActionError(null);
+        setRetryAction(null);
+        setDeletingKey(`sub:${c}:${s}`);
+        try {
+          await runPricingMutation({ kind: 'deleteSubsection', category: c, subsection: s });
+          setItems((current) => current.filter((item) => {
+            const category = item.category || UNCATEGORIZED_CATEGORY;
+            const subsection = item.description || DEFAULT_SUBSECTION;
+            return category !== c || subsection !== s;
+          }));
+          await fetchItems();
+        } catch (error) {
+          // Keep the tree authoritative when the server reports count=0 or the
+          // request fails after a remote delete.
+          await fetchItems();
+          setActionError(`Не удалось удалить подраздел: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`);
+        } finally {
+          setDeletingKey(null);
+          finishMutation();
+        }
+      }
+    });
   };
   const addSub = async (c: string) => {
     const subsection = rv.trim();
@@ -647,6 +599,7 @@ export default function SupabasePricingEditor() {
       await fetchItems();
     } catch (error) {
       setActionError(`Не удалось создать подраздел: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`);
+      setRetryAction(null);
     } finally {
       createInFlightRef.current = false;
       finishMutation();
@@ -659,11 +612,13 @@ export default function SupabasePricingEditor() {
     slideMoveInFlightRef.current.add(id);
     setMovingId(id);
     setActionError(null);
+    setRetryAction(null);
     try {
       await runPricingMutation({ kind: 'moveToSlide', id, slideIndex: si, features: item.features });
       await fetchItems();
     } catch (error) {
       setActionError(`Не удалось изменить страницу услуги: ${error instanceof Error ? error.message : 'неизвестная ошибка'}`);
+      setRetryAction(() => () => moveToSlide(id, si));
     } finally {
       slideMoveInFlightRef.current.delete(id);
       setMovingId(null);
@@ -671,7 +626,7 @@ export default function SupabasePricingEditor() {
     }
   };
 
-  const normalizedSearch = search.trim().toLowerCase();
+  const normalizedSearch = debouncedSearch.trim().toLowerCase();
   const fg = useMemo<Grouped>(() => {
     if (!normalizedSearch) return grouped;
 
@@ -697,7 +652,7 @@ export default function SupabasePricingEditor() {
 
   // Arrow button component
   const ArrowBtn = ({ onClick, disabled, title }: { onClick: () => void; disabled?: boolean; title: string }) => (
-    <button type="button" onClick={onClick} disabled={disabled || !!movingId || !!pendingToggleId || !!deletingKey || mutationBusy}
+    <button type="button" onClick={onClick} disabled={disabled || !!movingId || !!pendingToggleId || !!deletingKey || pricingMutation.isPending}
       title={title}
       className="p-1 text-slate-500 hover:text-white hover:bg-slate-700/50 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -707,7 +662,7 @@ export default function SupabasePricingEditor() {
   );
 
   const ArrowDownBtn = ({ onClick, disabled, title }: { onClick: () => void; disabled?: boolean; title: string }) => (
-    <button type="button" onClick={onClick} disabled={disabled || !!movingId || !!pendingToggleId || !!deletingKey || mutationBusy}
+    <button type="button" onClick={onClick} disabled={disabled || !!movingId || !!pendingToggleId || !!deletingKey || pricingMutation.isPending}
       title={title}
       className="p-1 text-slate-500 hover:text-white hover:bg-slate-700/50 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -718,11 +673,70 @@ export default function SupabasePricingEditor() {
 
   return (
     <div className="space-y-4">
-      {actionError && (
-        <div role="alert" className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-          {actionError}
+      {/* Validation error banner */}
+      {validationError && (
+        <div role="alert" className="rounded-lg border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-300 flex items-center justify-between">
+          <span>{validationError}</span>
+          <button
+            type="button"
+            onClick={() => setValidationError(null)}
+            className="text-yellow-400 hover:text-yellow-300 ml-4"
+            aria-label="Закрыть"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
       )}
+
+      {/* Action error banner */}
+      {actionError && (
+        <div role="alert" className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          <div className="flex items-center justify-between gap-4">
+            <span>{actionError}</span>
+            {retryAction && (
+              <button
+                type="button"
+                onClick={() => {
+                  setActionError(null);
+                  void retryAction();
+                }}
+                className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-medium transition-colors whitespace-nowrap"
+              >
+                Повторить
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {confirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4">
+            <h3 className="text-lg font-semibold text-white">Подтверждение</h3>
+            <p className="text-slate-300 text-sm">{confirmModal.message}</p>
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setConfirmModal(null)}
+                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                onClick={confirmModal.onConfirm}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                Удалить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-sm text-slate-400">Всего: <strong className="text-white">{items.length}</strong></span>
@@ -737,12 +751,14 @@ export default function SupabasePricingEditor() {
 
       {/* Search */}
       <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
-        onKeyDownCapture={(e) => logKeyEvent('capture', 'keydown', e)}
-        onKeyDown={(e) => logKeyEvent('bubble', 'keydown', e)}
-        onKeyUpCapture={(e) => logKeyEvent('capture', 'keyup', e)}
-        onKeyUp={(e) => logKeyEvent('bubble', 'keyup', e)}
-        onKeyPressCapture={(e) => logKeyEvent('capture', 'keypress', e)}
-        onKeyPress={(e) => logKeyEvent('bubble', 'keypress', e)}
+        {...(process.env.NODE_ENV === 'development' ? {
+          onKeyDownCapture: (e) => logKeyEvent('capture', 'keydown', e),
+          onKeyDown: (e) => logKeyEvent('bubble', 'keydown', e),
+          onKeyUpCapture: (e) => logKeyEvent('capture', 'keyup', e),
+          onKeyUp: (e) => logKeyEvent('bubble', 'keyup', e),
+          onKeyPressCapture: (e) => logKeyEvent('capture', 'keypress', e),
+          onKeyPress: (e) => logKeyEvent('bubble', 'keypress', e),
+        } : {})}
         placeholder="Поиск по названию или цене..."
         className="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#DB9844]" />
 
@@ -794,7 +810,7 @@ export default function SupabasePricingEditor() {
           <SortableCategory
             key={cat}
             category={cat}
-            disabled={Boolean(movingId || pendingToggleId || deletingKey || mutationBusy)}
+            disabled={Boolean(movingId || pendingToggleId || deletingKey || pricingMutation.isPending)}
             className={`bg-slate-800/50 rounded-xl border border-slate-700/50 overflow-hidden transition-opacity ${movingId === `cat:${cat}` || deletingKey === `category:${cat}` ? 'opacity-50' : ''}`}
           >
             {({ setActivatorNodeRef, attributes, listeners }) => (

@@ -9,7 +9,7 @@ export default async function EmployeesPage() {
   const { data: employees, error } = await supabase
     .from('employees')
     .select('*')
-    .order('order_index', { ascending: true });
+    .order('order_index', { ascending: true, nullsFirst: false });
 
   return (
     <>

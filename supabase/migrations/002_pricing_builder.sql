@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS pricing (
   visible boolean DEFAULT true,
   duration text DEFAULT '',
   features jsonb DEFAULT '[]'::jsonb,
-  created_at timestamptz DEFAULT now()
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
 );
 
 -- 2. Таблица settings
@@ -33,7 +34,27 @@ CREATE TABLE IF NOT EXISTS settings (
   updated_at timestamptz DEFAULT now()
 );
 
--- 3. RLS для pricing
+-- 3. Trigger function для auto-update updated_at
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 4. Triggers для pricing и settings
+CREATE TRIGGER update_pricing_updated_at
+  BEFORE UPDATE ON pricing
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_settings_updated_at
+  BEFORE UPDATE ON settings
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- 5. RLS для pricing
 ALTER TABLE pricing ENABLE ROW LEVEL SECURITY;
 
 DO $$ BEGIN
@@ -45,7 +66,7 @@ DO $$ BEGIN
   END IF;
 END $$;
 
--- 4. RLS для settings
+-- 6. RLS для settings
 ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 
 DO $$ BEGIN

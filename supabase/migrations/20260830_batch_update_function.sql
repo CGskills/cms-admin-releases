@@ -30,7 +30,7 @@ BEGIN
 
     -- Execute update
     EXECUTE format(
-      'UPDATE %I SET order_index = $1, updated_at = NOW() WHERE id = $2',
+      'UPDATE %I SET order_index = $1 WHERE id = $2',
       table_name
     ) USING (item->>'order_index')::INTEGER, (item->>'id')::UUID;
 

@@ -9,7 +9,7 @@ export default async function TestimonialsPage() {
   const { data: testimonials, error } = await supabase
     .from('testimonials')
     .select('*')
-    .order('order_index', { ascending: true });
+    .order('order_index', { ascending: true, nullsLast: true });
 
   return (
     <>

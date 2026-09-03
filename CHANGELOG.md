@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.2.8] - 2026-09-03
+
+### Fixed
+- **Pricing Editor**: Fixed reorder functionality with proper drag-and-drop using @dnd-kit
+- **Dashboard**: Verified activity logs display correctly with proper date formatting
+- **Code Library**: Removed empty/unused sections from UI for cleaner interface
+
+### Changed
+- **Sidebar**: Streamlined navigation by removing empty menu sections
+- **UI Components**: Cleaned up unused component files and backups
+
+### Technical
+- Improved pricing editor stability with proper mutation handling
+- Enhanced TypeScript types for pricing components
+- Verified all admin pages load correctly (employees, portfolio, testimonials, pricing, code-library)
+
+---
+
 ## Security Fixes - 2026-08-30
 
 ### Critical Security Improvements (✅ COMPLETED)
